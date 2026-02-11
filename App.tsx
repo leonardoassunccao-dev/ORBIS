@@ -192,13 +192,13 @@ export default function App() {
                                     onClick={() => setTheme('pink')}
                                     className={`
                                         relative h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
-                                        bg-[#11050a] overflow-hidden
-                                        ${theme === 'pink' ? 'border-[#FF1493] ring-2 ring-[#FF1493]/20' : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100'}
+                                        bg-[#0F0F14] overflow-hidden
+                                        ${theme === 'pink' ? 'border-[#FF2D95] ring-2 ring-[#FF2D95]/20' : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100'}
                                     `}
                                 >
-                                    <div className="absolute inset-x-0 top-0 h-6 bg-[#FF1493]/20 w-full" />
-                                    <span className="text-xs font-medium text-[#FF1493] relative z-10 mt-4">Midnight</span>
-                                    {theme === 'pink' && <div className="absolute top-2 right-2 bg-[#FF1493] rounded-full p-0.5"><Check size={10} className="text-white" /></div>}
+                                    <div className="absolute inset-x-0 top-0 h-6 bg-[#FF2D95]/10 w-full" />
+                                    <span className="text-xs font-medium text-[#FF2D95] relative z-10 mt-4">Midnight</span>
+                                    {theme === 'pink' && <div className="absolute top-2 right-2 bg-[#FF2D95] rounded-full p-0.5"><Check size={10} className="text-white" /></div>}
                                 </button>
                             </div>
                         </div>
