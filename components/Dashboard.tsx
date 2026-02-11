@@ -3,7 +3,7 @@ import { Transaction, Category, PatrimonyTransaction } from '../types';
 import { AnalyticsService } from '../services/analytics';
 import { InsightService } from '../services/insights';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, Wallet, Calendar, Landmark, Sparkles, ShieldCheck, Lock, TrendingUp, AlertCircle, Anchor } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, Calendar, Landmark, Sparkles, ShieldCheck, Lock, TrendingUp, AlertCircle, Anchor, TrendingDown, Target, Lightbulb } from 'lucide-react';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -24,10 +24,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
     AnalyticsService.getSummary(filteredTransactions, patrimonyTransactions), 
   [filteredTransactions, patrimonyTransactions]);
 
-  // Forecast Logic (always based on full history for better accuracy, not filtered period)
-  const forecast = useMemo(() => 
-    AnalyticsService.getMonthForecast(transactions, stats.availableCash),
-  [transactions, stats.availableCash]);
+  // Consumption Data (Current Month)
+  const consumption = useMemo(() => 
+    AnalyticsService.getIncomeConsumption(transactions),
+  [transactions]);
+
+  // Insight Data (Real-time, No Projections)
+  const insightData = useMemo(() => {
+    const rawStats = AnalyticsService.getCurrentMonthStats(transactions, categories);
+    return InsightService.getDashboardCardInsight(rawStats);
+  }, [transactions, categories]);
 
   const chartData = useMemo(() => 
     AnalyticsService.getBalanceHistory(filteredTransactions), 
@@ -171,7 +177,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
           isMain
         />
         
-        {/* Base Fixa (New Recurrence Card) */}
+        {/* Base Fixa */}
         <SummaryCard 
           index={1}
           title="Base Fixa Mensal" 
@@ -200,14 +206,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
         />
       </div>
 
-      {/* Forecast Card (New Component) */}
-      <div className="animate-fade-in" style={{ animationDelay: '400ms', animationFillMode: 'backwards' }}>
-        <ForecastCard 
-            projectedBalance={forecast.projectedBalance}
-            isPositive={forecast.isPositive}
-            reliability={forecast.reliability}
+      {/* NEW SMART CARDS: Consumption & Financial Insight */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: '400ms', animationFillMode: 'backwards' }}>
+         <IncomeConsumptionCard 
+            percentage={consumption.percentage}
+            totalIncome={consumption.income}
+            totalExpense={consumption.expense}
             formatCurrency={formatCurrency}
-        />
+         />
+         <FinancialInsightCard 
+            title={insightData.title}
+            subtitle={insightData.subtitle}
+            status={insightData.status}
+         />
       </div>
 
       {/* Main Charts Area */}
@@ -338,56 +349,139 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
   );
 };
 
-// --- SUBCOMPONENTS ---
+// --- NEW SMART COMPONENTS ---
 
-interface ForecastCardProps {
-    projectedBalance: number;
-    isPositive: boolean;
-    reliability: 'low' | 'high';
-    formatCurrency: (val: number) => string;
+interface IncomeConsumptionCardProps {
+    percentage: number;
+    totalExpense: number;
+    totalIncome: number;
+    formatCurrency: (v: number) => string;
 }
 
-const ForecastCard: React.FC<ForecastCardProps> = ({ projectedBalance, isPositive, reliability, formatCurrency }) => {
+const IncomeConsumptionCard: React.FC<IncomeConsumptionCardProps> = ({ percentage, totalExpense, totalIncome, formatCurrency }) => {
+    let statusColor = "text-emerald-500";
+    let statusBg = "bg-emerald-500/10";
+    let message = "Seu consumo está sob controle.";
+    let barColor = "bg-emerald-500";
+
+    if (percentage > 85) {
+        statusColor = "text-rose-500";
+        statusBg = "bg-rose-500/10";
+        message = "Você já comprometeu quase toda sua renda.";
+        barColor = "bg-rose-500";
+    } else if (percentage > 60) {
+        statusColor = "text-amber-500";
+        statusBg = "bg-amber-500/10";
+        message = "Atenção ao ritmo de gastos.";
+        barColor = "bg-amber-500";
+    }
+
+    if (totalIncome === 0) {
+        message = "Registre sua renda para ver a análise.";
+    }
+
     return (
-        <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
-            <div className="flex justify-between items-start mb-2">
-                <h3 className="text-sm font-semibold text-gray-500 dark:text-orbis-textMuted uppercase tracking-wider flex items-center gap-2">
-                    <Calendar size={14} />
-                    Previsão do Mês
-                </h3>
-            </div>
-
-            <div className="mb-4">
-                <span className={`text-3xl md:text-4xl font-bold tracking-tight ${isPositive ? 'text-green-500 dark:text-[#8AFFC1]' : 'text-red-500 dark:text-[#FF8A8A]'}`}>
-                    Saldo estimado: {formatCurrency(projectedBalance)}
-                </span>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                    Com base no seu saldo atual e média de gastos.
-                </p>
-            </div>
-
-            <div className="h-px w-full bg-gray-100 dark:bg-white/5 my-4" />
-
-            <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${isPositive ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                    {isPositive ? <TrendingUp size={20} /> : <AlertCircle size={20} />}
+        <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full animate-enter-card">
+            <div>
+                <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-sm font-semibold text-gray-500 dark:text-orbis-textMuted uppercase tracking-wider flex items-center gap-2">
+                        <Target size={16} />
+                        Consumo da Renda
+                    </h3>
+                    <div className={`px-2 py-1 rounded-lg text-xs font-bold ${statusBg} ${statusColor}`}>
+                        {percentage}%
+                    </div>
                 </div>
-                <div className="flex-1">
-                    <p className={`text-sm font-medium ${isPositive ? 'text-gray-900 dark:text-white' : 'text-red-500 dark:text-red-400'}`}>
-                        {isPositive 
-                            ? (reliability === 'low' ? "Projeção inicial positiva." : "Você deve terminar o mês no azul.") 
-                            : "Atenção: projeção indica possível saldo negativo."}
+
+                <div className="mb-6">
+                    <h4 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white leading-tight mb-2">
+                        Você já utilizou <span className={statusColor}>{percentage}%</span> da sua renda
+                    </h4>
+                    <p className={`text-sm font-medium ${statusColor}`}>
+                        {message}
                     </p>
                 </div>
             </div>
 
-            {/* Optional Footer Microcopy */}
-             <div className="absolute bottom-4 right-4 text-[10px] text-gray-300 dark:text-white/10 opacity-0 group-hover:opacity-100 transition-opacity select-none">
-                Previsão baseada em dados atuais
+            <div>
+                <div className="w-full bg-gray-100 dark:bg-white/5 rounded-full h-2 mb-4 overflow-hidden">
+                    <div 
+                        className={`h-full rounded-full transition-all duration-1000 ease-out ${barColor}`} 
+                        style={{ width: `${Math.min(percentage, 100)}%` }} 
+                    />
+                </div>
+                
+                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-orbis-textMuted border-t border-gray-100 dark:border-white/5 pt-3">
+                    <div className="flex flex-col">
+                        <span>Total gasto</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(totalExpense)}</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span>Renda registrada</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(totalIncome)}</span>
+                    </div>
+                </div>
             </div>
         </div>
     );
 };
+
+interface FinancialInsightCardProps {
+    title: string;
+    subtitle: string;
+    status: 'danger' | 'warning' | 'info' | 'success';
+}
+
+const FinancialInsightCard: React.FC<FinancialInsightCardProps> = ({ title, subtitle, status }) => {
+    let iconColor = "text-indigo-500";
+    let iconBg = "bg-indigo-500/10";
+    
+    if (status === 'danger') {
+        iconColor = "text-rose-500";
+        iconBg = "bg-rose-500/10";
+    } else if (status === 'warning') {
+        iconColor = "text-amber-500";
+        iconBg = "bg-amber-500/10";
+    } else if (status === 'success') {
+        iconColor = "text-emerald-500";
+        iconBg = "bg-emerald-500/10";
+    }
+
+    return (
+        <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full animate-enter-card" style={{ animationDelay: '100ms' }}>
+            <div>
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-orbis-textMuted uppercase tracking-wider flex items-center gap-2 mb-4">
+                    <Lightbulb size={16} className={iconColor} />
+                    Insight Financeiro
+                </h3>
+
+                <div>
+                    <h4 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white leading-tight mb-3">
+                        {title}
+                    </h4>
+                </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+                <div className="flex items-start gap-3">
+                     <div className={`p-2 rounded-full shrink-0 ${iconBg} ${iconColor}`}>
+                        <Sparkles size={18} />
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                            Recomendação
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-snug">
+                            {subtitle}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- HELPER SUBCOMPONENTS ---
 
 interface InsightsCardProps {
     text: string;

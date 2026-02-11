@@ -82,8 +82,73 @@ export const InsightService = {
   },
 
   /**
-   * Generates the most important insight for the current context.
-   * Rules: 1 insight only, neutral tone, short text.
+   * Rules for the "Financial Insight" Card (Card 2).
+   * Strict priority based on current month real data.
+   */
+  getDashboardCardInsight: (
+    stats: { 
+        incomeConsumption: number; 
+        fixedCostRatio: number; 
+        expenseGrowth: number; 
+        topCategoryName: string;
+        hasData: boolean;
+    }
+  ): { title: string; subtitle: string; status: 'danger' | 'warning' | 'info' | 'success' } => {
+    
+    if (!stats.hasData) {
+        return {
+            title: "Comece a registrar seus dados",
+            subtitle: "Os insights aparecerão conforme você usa.",
+            status: 'info'
+        };
+    }
+
+    // 1. High Consumption (> 85%)
+    if (stats.incomeConsumption > 85) {
+        return {
+            title: "Você já comprometeu quase toda sua renda este mês.",
+            subtitle: "Evite novos gastos não essenciais até o fim do mês.",
+            status: 'danger'
+        };
+    }
+
+    // 2. High Fixed Costs (> 60%)
+    if (stats.fixedCostRatio > 60) {
+        return {
+            title: "Seu custo fixo está consumindo mais da metade da sua renda.",
+            subtitle: "Reduzir custos fixos aumenta sua liberdade financeira.",
+            status: 'warning'
+        };
+    }
+
+    // 3. MoM Increase (> 0%)
+    if (stats.expenseGrowth > 0) {
+        return {
+            title: "Seus gastos aumentaram em relação ao mês passado.",
+            subtitle: "Identifique o que causou essa variação.",
+            status: 'warning'
+        };
+    }
+
+    // 4. Top Category (If defined)
+    if (stats.topCategoryName) {
+        return {
+            title: `${stats.topCategoryName} é sua maior categoria de gasto neste mês.`,
+            subtitle: "Avalie se este valor está dentro do esperado.",
+            status: 'info'
+        };
+    }
+
+    // 5. Default Balanced
+    return {
+        title: "Seu padrão de gastos está equilibrado este mês.",
+        subtitle: "Continue mantendo o controle.",
+        status: 'success'
+    };
+  },
+
+  /**
+   * Generates the most important insight for the current context (Header).
    */
   getSmartInsight: (transactions: Transaction[], patrimonyTransactions: PatrimonyTransaction[]): { text: string; status: 'good' | 'neutral' | 'warning' } => {
     const now = new Date();
@@ -138,9 +203,8 @@ export const InsightService = {
     }
 
     // B. Invisible Cost (Pequenos gastos recorrentes)
-    // Rule: Unit value <= ~12% of daily avg AND frequency >= 4 in current month
-    if (stableDailyAvg > 5) { // Minimum daily avg to trigger this logic
-        const smallTxnThreshold = stableDailyAvg * 0.12; // 12% to be inclusive
+    if (stableDailyAvg > 5) {
+        const smallTxnThreshold = stableDailyAvg * 0.12;
         const invisibleGroups: Record<string, { count: number, total: number }> = {};
         
         transactions
@@ -153,7 +217,6 @@ export const InsightService = {
                 }
             });
 
-        // Sum total of qualifying recurrent small costs
         let invisibleTotal = 0;
         let hasRecurrence = false;
 
@@ -164,7 +227,6 @@ export const InsightService = {
             }
         }
         
-        // Show if impact is relevant (> 50% of a daily avg accumulated)
         if (hasRecurrence && invisibleTotal > stableDailyAvg * 0.5) {
              const formatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(invisibleTotal);
              return {
@@ -175,7 +237,6 @@ export const InsightService = {
     }
 
     // C. Patrimony Growth
-    // "Seu patrimônio cresceu. A constância é o segredo."
     if (patrimonyDeposits > 0 && (averageMonthly === 0 || projection <= averageMonthly * 1.1)) {
         return {
             text: "Seu patrimônio cresceu neste período. A constância é o segredo.",
@@ -184,7 +245,6 @@ export const InsightService = {
     }
 
     // D. Spending Low
-    // "Controle exemplar. Gastos X% menores que a média histórica."
     if (averageMonthly > 0 && projection < averageMonthly * 0.85 && daysPassed > 5) {
         const pct = Math.round((1 - projection / averageMonthly) * 100);
         return {
@@ -193,7 +253,7 @@ export const InsightService = {
         };
     }
 
-    // E. Fallback: Daily Tip (instead of generic stability message)
+    // E. Fallback: Daily Tip
     return {
         text: InsightService.getDailyTip(),
         status: 'neutral'

@@ -79,83 +79,71 @@ export const AnalyticsService = {
   },
 
   /**
-   * Calculates a projection for the end of the current month.
+   * Calculates Income Consumption for the current month.
    */
-  getMonthForecast: (transactions: Transaction[], currentAvailableCash: number) => {
+  getIncomeConsumption: (transactions: Transaction[]) => {
     const now = new Date();
-    const daysInMonth = getDaysInMonth(now);
-    const daysPassed = getDate(now);
-
-    // 1. Calculate Historical Averages (Income & Expense) - Last 3 months
-    let totalHistIncome = 0;
-    let totalHistExpense = 0;
-    let monthsCount = 0;
-
-    for (let i = 1; i <= 3; i++) {
-        const date = subMonths(now, i);
-        const monthTx = transactions.filter(t => isSameMonth(parseISO(t.dateISO), date));
-        
-        if (monthTx.length > 0) {
-            totalHistIncome += monthTx.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-            totalHistExpense += monthTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-            monthsCount++;
-        }
-    }
-
-    const avgIncome = monthsCount > 0 ? totalHistIncome / monthsCount : 0;
-    // Base average expense logic
-    const avgExpense = monthsCount > 0 ? totalHistExpense / monthsCount : 0;
-
-    // 2. Calculate Current Month Realized
     const currentMonthTx = transactions.filter(t => isSameMonth(parseISO(t.dateISO), now));
-    const realizedIncome = currentMonthTx.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const realizedExpense = currentMonthTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-
-    // 3. Estimate Remaining (Projected)
-    // Income Logic
-    const remainingIncome = Math.max(0, avgIncome - realizedIncome);
     
-    // Expense Logic (Smart Hybrid: Recurrence + Variable Avg)
-    // Calculate total known recurring expenses from history (approximate)
-    // We look at the last month to see what was "monthly"
-    const lastMonth = subMonths(now, 1);
-    const lastMonthRecurring = transactions
-        .filter(t => isSameMonth(parseISO(t.dateISO), lastMonth) && t.type === 'expense' && t.recurrence === 'monthly')
+    const income = currentMonthTx.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const expense = currentMonthTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    
+    const percentage = income > 0 ? Math.round((expense / income) * 100) : 0;
+    
+    return {
+        income,
+        expense,
+        percentage
+    };
+  },
+
+  /**
+   * Gets specific stats for the Current Month Insight Card.
+   * Strictly based on REAL data, no projections.
+   */
+  getCurrentMonthStats: (transactions: Transaction[], categories: Category[]) => {
+    const now = new Date();
+    const currentMonthTx = transactions.filter(t => isSameMonth(parseISO(t.dateISO), now));
+    const lastMonthTx = transactions.filter(t => isSameMonth(parseISO(t.dateISO), subMonths(now, 1)));
+
+    // 1. Current Income/Expense
+    const currentIncome = currentMonthTx.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const currentExpense = currentMonthTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    
+    // 2. Fixed Costs (Monthly/Yearly recurrence types in current month)
+    const fixedCosts = currentMonthTx
+        .filter(t => t.type === 'expense' && (t.recurrence === 'monthly' || t.recurrence === 'yearly'))
         .reduce((acc, t) => acc + t.amount, 0);
 
-    // Current month realized recurring
-    const realizedRecurring = currentMonthTx
-        .filter(t => t.type === 'expense' && t.recurrence === 'monthly')
-        .reduce((acc, t) => acc + t.amount, 0);
-    
-    // Pending recurring (estimated)
-    const pendingRecurring = Math.max(0, lastMonthRecurring - realizedRecurring);
+    // 3. Month over Month Change (Expenses)
+    const lastMonthExpense = lastMonthTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    const expenseGrowth = lastMonthExpense > 0 ? ((currentExpense - lastMonthExpense) / lastMonthExpense) * 100 : 0;
 
-    // Variable expenses projection (daily rate)
-    // We strip out recurring from average to calculate variable run rate
-    const estimatedVariableTotal = avgExpense - lastMonthRecurring; // Rough estimate of variable portion
-    const realizedVariable = realizedExpense - realizedRecurring;
+    // 4. Top Category
+    const categoryTotals: Record<string, number> = {};
+    currentMonthTx.filter(t => t.type === 'expense').forEach(t => {
+        categoryTotals[t.categoryId] = (categoryTotals[t.categoryId] || 0) + t.amount;
+    });
     
-    let remainingVariable = 0;
-    if (estimatedVariableTotal > 0) {
-        remainingVariable = Math.max(0, estimatedVariableTotal - realizedVariable);
-    } else {
-        // Fallback if no history
-        const dailyRate = daysPassed > 0 ? realizedExpense / daysPassed : 0;
-        const daysLeft = daysInMonth - daysPassed;
-        remainingVariable = dailyRate * daysLeft;
-    }
+    let topCategoryId = '';
+    let topCategoryAmount = 0;
+    
+    Object.entries(categoryTotals).forEach(([id, amount]) => {
+        if (amount > topCategoryAmount) {
+            topCategoryAmount = amount;
+            topCategoryId = id;
+        }
+    });
 
-    const remainingExpense = pendingRecurring + remainingVariable;
-    const projectedBalance = currentAvailableCash + remainingIncome - remainingExpense;
+    const topCategoryName = topCategoryId ? categories.find(c => c.id === topCategoryId)?.name : '';
 
     return {
-        projectedBalance,
-        remainingIncome,
-        remainingExpense,
-        avgExpense,
-        isPositive: projectedBalance >= 0,
-        reliability: monthsCount === 0 ? 'low' : 'high' 
+        incomeConsumption: currentIncome > 0 ? (currentExpense / currentIncome) * 100 : 0,
+        fixedCostRatio: currentIncome > 0 ? (fixedCosts / currentIncome) * 100 : 0,
+        expenseGrowth, // Positive means spent more than last month
+        topCategoryName,
+        topCategoryAmount,
+        hasData: currentMonthTx.length > 0
     };
   },
 
