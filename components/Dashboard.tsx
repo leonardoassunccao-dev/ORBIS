@@ -3,7 +3,7 @@ import { Transaction, Category, PatrimonyTransaction } from '../types';
 import { AnalyticsService } from '../services/analytics';
 import { InsightService } from '../services/insights';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, Wallet, Calendar, Landmark, Sparkles, ShieldCheck, Lock, TrendingUp, AlertCircle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, Calendar, Landmark, Sparkles, ShieldCheck, Lock, TrendingUp, AlertCircle, Anchor } from 'lucide-react';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -171,14 +171,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
           isMain
         />
         
-        {/* Patrimony */}
+        {/* Base Fixa (New Recurrence Card) */}
         <SummaryCard 
           index={1}
-          title="Patrimônio" 
-          value={stats.patrimonyTotal} 
-          description="Sua base de segurança financeira."
-          icon={Landmark} 
-          customColor="text-indigo-500"
+          title="Base Fixa Mensal" 
+          value={stats.fixedBase} 
+          description="Gastos recorrentes neste período."
+          icon={Anchor}
+          customColor="text-pink-500"
         />
 
         {/* Total Balance */}

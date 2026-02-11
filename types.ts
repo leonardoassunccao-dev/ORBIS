@@ -1,5 +1,7 @@
 export type TransactionType = 'income' | 'expense';
 
+export type RecurrenceType = 'unique' | 'monthly' | 'yearly';
+
 export interface Category {
   id: string;
   name: string;
@@ -14,6 +16,7 @@ export interface Transaction {
   categoryId: string;
   description: string;
   type: TransactionType;
+  recurrence?: RecurrenceType; // New field
   createdAt: number;
 }
 
@@ -37,6 +40,7 @@ export interface SummaryStats {
   patrimonyTotal: number; // Total accumulated in Patrimony
   totalIncome: number;
   totalExpense: number;
+  fixedBase: number; // Monthly Fixed Costs
   savingsRate: number;
 }
 

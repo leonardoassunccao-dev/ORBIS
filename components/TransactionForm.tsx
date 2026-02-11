@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Transaction, Category, TransactionType } from '../types';
-import { Loader2, Check, Sparkles, Calendar as CalIcon } from 'lucide-react';
+import { Transaction, Category, TransactionType, RecurrenceType } from '../types';
+import { Loader2, Check, Sparkles, Calendar as CalIcon, RefreshCw, Save } from 'lucide-react';
 import { InsightService } from '../services/insights';
 
 interface TransactionFormProps {
@@ -10,19 +10,39 @@ interface TransactionFormProps {
     onSave: (data: Omit<Transaction, 'id' | 'createdAt'>) => void;
     onCancel?: () => void;
     autoFocus?: boolean;
+    initialData?: Transaction | null; // Added for Edit Mode
 }
 
-export const TransactionForm: React.FC<TransactionFormProps> = ({ type, categories, transactions, onSave, onCancel, autoFocus = true }) => {
+export const TransactionForm: React.FC<TransactionFormProps> = ({ 
+    type, categories, transactions, onSave, onCancel, autoFocus = true, initialData 
+}) => {
+    // Initial state setup based on initialData or defaults
     const [displayValue, setDisplayValue] = useState('');
     const [rawValue, setRawValue] = useState(0);
     const [desc, setDesc] = useState('');
     const [catId, setCatId] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [recurrence, setRecurrence] = useState<RecurrenceType>('unique');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [autoSuggested, setAutoSuggested] = useState(false);
 
-    // Auto-suggestion logic
+    // Effect to populate form when initialData changes (Edit Mode)
     useEffect(() => {
+        if (initialData) {
+            setRawValue(initialData.amount);
+            setDisplayValue(initialData.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+            setDesc(initialData.description);
+            setCatId(initialData.categoryId);
+            // Ensure we grab just the YYYY-MM-DD part
+            setDate(initialData.dateISO.split('T')[0]);
+            setRecurrence(initialData.recurrence || 'unique');
+        }
+    }, [initialData]);
+
+    // Auto-suggestion logic (Only run if NOT editing)
+    useEffect(() => {
+        if (initialData) return; // Disable auto-suggest on edit
+        
         if (!desc || desc.length < 3) {
             if (desc.length === 0) setAutoSuggested(false);
             return;
@@ -35,7 +55,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, categori
                 setAutoSuggested(true);
             }
         }
-    }, [desc, transactions, categories, catId, autoSuggested]);
+    }, [desc, transactions, categories, catId, autoSuggested, initialData]);
 
     const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setCatId(e.target.value);
@@ -59,28 +79,37 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, categori
         if (rawValue <= 0 || !desc || !catId) return;
 
         setIsSubmitting(true);
-        await new Promise(r => setTimeout(r, 800));
+        // Small delay for UX feel
+        await new Promise(r => setTimeout(r, 600));
 
         onSave({
             amount: rawValue,
             description: desc,
             categoryId: catId,
-            dateISO: date,
-            type
+            dateISO: date, // Will be saved as YYYY-MM-DD (acceptable for ISO parsing)
+            type,
+            recurrence
         });
+        
         setIsSubmitting(false);
-        // Reset
-        setDisplayValue('');
-        setRawValue(0);
-        setDesc('');
-        setCatId('');
-        setAutoSuggested(false);
+        
+        // Only reset if NOT editing (Edit modal usually closes after save)
+        if (!initialData) {
+            setDisplayValue('');
+            setRawValue(0);
+            setDesc('');
+            setCatId('');
+            setRecurrence('unique');
+            setAutoSuggested(false);
+        }
     }
 
     const relevantCategories = categories.filter(c => c.type === 'both' || c.type === type);
+    const isEditing = !!initialData;
 
     return (
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Amount Input */}
             <div className="col-span-1 md:col-span-2">
                 <label className="block text-xs font-medium text-gray-500 dark:text-orbis-textMuted uppercase mb-1">Valor</label>
                 <input 
@@ -95,6 +124,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, categori
                 />
             </div>
 
+            {/* Description */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-orbis-textMuted uppercase mb-2">Descrição</label>
                 <input 
@@ -102,15 +132,16 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, categori
                     required
                     value={desc}
                     onChange={e => setDesc(e.target.value)}
-                    placeholder={type === 'expense' ? "Ex: Supermercado" : "Ex: Freela Design"}
+                    placeholder={type === 'expense' ? "Ex: Netflix, Aluguel..." : "Ex: Salário, Projeto..."}
                     className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary focus:ring-1 focus:ring-orbis-primary transition-all"
                 />
             </div>
 
+            {/* Category */}
             <div>
                 <div className="flex justify-between items-center mb-2">
                         <label className="block text-xs font-medium text-gray-500 dark:text-orbis-textMuted uppercase">Categoria</label>
-                        {autoSuggested && (
+                        {autoSuggested && !isEditing && (
                         <span className="flex items-center gap-1 text-[10px] text-orbis-accent animate-fade-in font-medium bg-orbis-accent/10 px-2 py-0.5 rounded-full">
                             <Sparkles size={10} /> Sugestão automática
                         </span>
@@ -134,6 +165,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, categori
                 </div>
             </div>
 
+            {/* Date */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-orbis-textMuted uppercase mb-2">Data</label>
                 <div className="relative">
@@ -148,6 +180,48 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, categori
                 </div>
             </div>
 
+            {/* Recurrence (New Field) */}
+            <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-orbis-textMuted uppercase mb-2">Recorrência</label>
+                <div className="flex bg-gray-50 dark:bg-black/20 p-1 rounded-xl border border-gray-200 dark:border-white/10">
+                    <button
+                        type="button"
+                        onClick={() => setRecurrence('unique')}
+                        className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
+                            recurrence === 'unique' 
+                            ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' 
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                        }`}
+                    >
+                        Único
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setRecurrence('monthly')}
+                        className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
+                            recurrence === 'monthly' 
+                            ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' 
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                        }`}
+                    >
+                        <RefreshCw size={14} />
+                        Mensal
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setRecurrence('yearly')}
+                        className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
+                            recurrence === 'yearly' 
+                            ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' 
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                        }`}
+                    >
+                        Anual
+                    </button>
+                </div>
+            </div>
+
+            {/* Actions */}
             <div className="flex items-end col-span-1 md:col-span-2 gap-3 pt-2">
                 {onCancel && (
                     <button 
@@ -169,12 +243,12 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ type, categori
                     {isSubmitting ? (
                         <>
                             <Loader2 className="animate-spin" />
-                            Salvando...
+                            {isEditing ? 'Atualizando...' : 'Salvando...'}
                         </>
                     ) : (
                         <>
-                            <Check size={20} />
-                            Salvar
+                            {isEditing ? <Save size={20} /> : <Check size={20} />}
+                            {isEditing ? 'Atualizar' : 'Salvar'}
                         </>
                     )}
                 </button>

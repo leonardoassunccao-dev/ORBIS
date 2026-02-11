@@ -52,11 +52,20 @@ export const AnalyticsService = {
     // Patrimony Calculations
     const patrimonyTotal = PatrimonyService.calculateTotal(patrimonyTransactions);
     
-    // Available Cash = (Net Worth) - (Money locked in Patrimony)
-    // Note: If patrimonyTotal is negative (impossible logic but good for safety), we handle it.
+    // Available Cash
     const availableCash = balance - patrimonyTotal;
 
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
+
+    // --- Fixed Base Calculation (Base Fixa) ---
+    // Calculates the monthly impact of recurring transactions found in the filtered view.
+    const fixedBase = transactions
+      .filter(t => t.type === 'expense' && (t.recurrence === 'monthly' || t.recurrence === 'yearly'))
+      .reduce((acc, t) => {
+        if (t.recurrence === 'monthly') return acc + t.amount;
+        if (t.recurrence === 'yearly') return acc + (t.amount / 12);
+        return acc;
+      }, 0);
 
     return {
       balance,
@@ -64,14 +73,13 @@ export const AnalyticsService = {
       patrimonyTotal,
       totalIncome,
       totalExpense,
+      fixedBase,
       savingsRate
     };
   },
 
   /**
    * Calculates a projection for the end of the current month.
-   * Logic: Current Balance + (Expected Remaining Income) - (Expected Remaining Expense)
-   * Expected values are derived from historical averages vs current month realization.
    */
   getMonthForecast: (transactions: Transaction[], currentAvailableCash: number) => {
     const now = new Date();
@@ -95,6 +103,7 @@ export const AnalyticsService = {
     }
 
     const avgIncome = monthsCount > 0 ? totalHistIncome / monthsCount : 0;
+    // Base average expense logic
     const avgExpense = monthsCount > 0 ? totalHistExpense / monthsCount : 0;
 
     // 2. Calculate Current Month Realized
@@ -103,22 +112,41 @@ export const AnalyticsService = {
     const realizedExpense = currentMonthTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
 
     // 3. Estimate Remaining (Projected)
-    // If realized > average, we assume 0 remaining (conservative), unless it's very early in the month.
-    // If it's early in the month (day < 5) and no data, we rely fully on average.
-    
+    // Income Logic
     const remainingIncome = Math.max(0, avgIncome - realizedIncome);
     
-    // For expenses, we calculate a daily run rate if averages are missing, or use remaining budget based on average
-    let remainingExpense = 0;
-    if (avgExpense > 0) {
-        remainingExpense = Math.max(0, avgExpense - realizedExpense);
+    // Expense Logic (Smart Hybrid: Recurrence + Variable Avg)
+    // Calculate total known recurring expenses from history (approximate)
+    // We look at the last month to see what was "monthly"
+    const lastMonth = subMonths(now, 1);
+    const lastMonthRecurring = transactions
+        .filter(t => isSameMonth(parseISO(t.dateISO), lastMonth) && t.type === 'expense' && t.recurrence === 'monthly')
+        .reduce((acc, t) => acc + t.amount, 0);
+
+    // Current month realized recurring
+    const realizedRecurring = currentMonthTx
+        .filter(t => t.type === 'expense' && t.recurrence === 'monthly')
+        .reduce((acc, t) => acc + t.amount, 0);
+    
+    // Pending recurring (estimated)
+    const pendingRecurring = Math.max(0, lastMonthRecurring - realizedRecurring);
+
+    // Variable expenses projection (daily rate)
+    // We strip out recurring from average to calculate variable run rate
+    const estimatedVariableTotal = avgExpense - lastMonthRecurring; // Rough estimate of variable portion
+    const realizedVariable = realizedExpense - realizedRecurring;
+    
+    let remainingVariable = 0;
+    if (estimatedVariableTotal > 0) {
+        remainingVariable = Math.max(0, estimatedVariableTotal - realizedVariable);
     } else {
-        // Fallback: if no history, project based on current month daily average
+        // Fallback if no history
         const dailyRate = daysPassed > 0 ? realizedExpense / daysPassed : 0;
         const daysLeft = daysInMonth - daysPassed;
-        remainingExpense = dailyRate * daysLeft;
+        remainingVariable = dailyRate * daysLeft;
     }
 
+    const remainingExpense = pendingRecurring + remainingVariable;
     const projectedBalance = currentAvailableCash + remainingIncome - remainingExpense;
 
     return {
@@ -127,7 +155,6 @@ export const AnalyticsService = {
         remainingExpense,
         avgExpense,
         isPositive: projectedBalance >= 0,
-        // Reliability score: Low if no history, High if we have 3 months data
         reliability: monthsCount === 0 ? 'low' : 'high' 
     };
   },
@@ -156,8 +183,6 @@ export const AnalyticsService = {
   },
 
   getBalanceHistory: (transactions: Transaction[]): { date: string, balance: number }[] => {
-    // Note: This history currently shows "Net Worth" evolution, not "Available Cash".
-    // This is usually correct for a general financial overview.
     const sorted = [...transactions].sort((a, b) => a.dateISO.localeCompare(b.dateISO));
     let runningBalance = 0;
     const history: { date: string, balance: number }[] = [];

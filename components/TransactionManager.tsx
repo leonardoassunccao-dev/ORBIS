@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Transaction, Category, TransactionType } from '../types';
-import { Plus, Search, Trash2, X, Receipt, FileSearch } from 'lucide-react';
+import { Plus, Search, Trash2, X, Receipt, FileSearch, Pencil } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TransactionForm } from './TransactionForm';
@@ -21,11 +21,12 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
 }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  // Notify parent when form state changes
+  // Notify parent when form state changes (including edit modal)
   useEffect(() => {
-    onFormToggle?.(isFormOpen);
-  }, [isFormOpen, onFormToggle]);
+    onFormToggle?.(isFormOpen || !!editingTransaction);
+  }, [isFormOpen, editingTransaction, onFormToggle]);
   
   // Filter relevant transactions
   const listData = useMemo(() => {
@@ -34,6 +35,20 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
       .filter(t => t.description.toLowerCase().includes(searchTerm.toLowerCase()))
       .sort((a, b) => new Date(b.dateISO).getTime() - new Date(a.dateISO).getTime());
   }, [transactions, type, searchTerm]);
+
+  const handleEditClick = (t: Transaction) => {
+    setEditingTransaction(t);
+  };
+
+  const handleEditSave = (data: Omit<Transaction, 'id' | 'createdAt'>) => {
+    if (editingTransaction) {
+        onEdit({
+            ...editingTransaction,
+            ...data
+        });
+        setEditingTransaction(null);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in pb-4">
@@ -63,6 +78,7 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
         </div>
       </div>
 
+      {/* Add Form (Inline) */}
       {isFormOpen && (
         <div className="animate-slide-up origin-top bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-xl mb-6 relative overflow-hidden">
             <TransactionForm 
@@ -77,7 +93,39 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
         </div>
       )}
 
-      {/* Search Bar (Only show if there are transactions to search) */}
+      {/* Edit Modal / Bottom Sheet */}
+      {editingTransaction && (
+         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+            {/* Click backdrop to close */}
+            <div className="absolute inset-0" onClick={() => setEditingTransaction(null)} />
+            
+            <div className="relative w-full max-w-xl bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/10 rounded-t-3xl md:rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <Pencil size={20} className="text-orbis-primary" />
+                        Editar Lançamento
+                    </h3>
+                    <button 
+                        onClick={() => setEditingTransaction(null)}
+                        className="p-2 bg-gray-100 dark:bg-white/5 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                    >
+                        <X size={20} className="text-gray-500" />
+                    </button>
+                </div>
+                
+                <TransactionForm 
+                    type={type}
+                    categories={categories}
+                    transactions={transactions}
+                    initialData={editingTransaction}
+                    onSave={handleEditSave}
+                    onCancel={() => setEditingTransaction(null)}
+                />
+            </div>
+         </div>
+      )}
+
+      {/* Search Bar */}
       {transactions.some(t => t.type === type) && (
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -91,7 +139,7 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
           </div>
       )}
 
-      {/* Mobile-First List View */}
+      {/* List View */}
       <div className="space-y-3">
         {listData.length === 0 ? (
             <div className="py-20 flex flex-col items-center justify-center text-center opacity-70 animate-fade-in">
@@ -114,6 +162,7 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
                     transaction={t} 
                     categories={categories}
                     onDelete={onDelete}
+                    onEdit={() => handleEditClick(t)}
                     isHighlighted={highlightId === t.id}
                 />
             ))
@@ -127,10 +176,11 @@ interface TransactionItemProps {
     transaction: Transaction;
     categories: Category[];
     onDelete: (id: string) => void;
+    onEdit: () => void;
     isHighlighted: boolean;
 }
 
-const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categories, onDelete, isHighlighted }) => {
+const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categories, onDelete, onEdit, isHighlighted }) => {
     const category = categories.find(c => c.id === transaction.categoryId);
     const date = parseISO(transaction.dateISO);
     
@@ -139,7 +189,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categori
     
     return (
         <div className={`
-            relative overflow-hidden rounded-2xl p-4 transition-all duration-500 border
+            relative overflow-hidden rounded-2xl p-4 transition-all duration-500 border group
             bg-white dark:bg-orbis-surface
             ${isHighlighted 
                 ? 'border-orbis-accent shadow-[0_0_20px_rgba(138,123,255,0.25)] animate-pulse-glow z-10' 
@@ -150,7 +200,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categori
             )}
             <div className="flex items-center justify-between gap-4 relative z-10">
                 {/* Left: Icon & Info */}
-                <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="flex items-center gap-4 flex-1 min-w-0" onClick={onEdit} role="button">
                     <div 
                         className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0 shadow-inner"
                         style={{ backgroundColor: `${category?.color || '#9AA0C3'}20`, color: category?.color || '#9AA0C3' }}
@@ -165,26 +215,44 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categori
                             <span className="font-medium" style={{ color: category?.color }}>{category?.name}</span>
                             <span>•</span>
                             <span>{format(date, "d MMM", { locale: ptBR })}</span>
+                            {transaction.recurrence && transaction.recurrence !== 'unique' && (
+                                <span className="bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wide">
+                                    {transaction.recurrence === 'monthly' ? 'Mensal' : 'Anual'}
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Right: Value & Delete */}
-                <div className="flex flex-col items-end gap-2 shrink-0">
+                {/* Right: Value & Actions */}
+                <div className="flex flex-col items-end gap-1 shrink-0">
                     <span className={`font-bold text-base md:text-lg ${transaction.type === 'income' ? 'text-green-500' : 'text-gray-900 dark:text-white'}`}>
                         {transaction.type === 'expense' ? '- ' : '+ '}
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(transaction.amount).replace('R$', '').trim()}
                     </span>
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if(confirm('Excluir este item?')) onDelete(transaction.id);
-                        }}
-                        className="p-2 -mr-2 text-gray-400 hover:text-red-500 active:text-red-500 transition-colors touch-manipulation"
-                        aria-label="Excluir"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                    
+                    <div className="flex items-center gap-1 mt-1">
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit();
+                            }}
+                            className="p-2 text-gray-300 dark:text-gray-600 hover:text-orbis-primary active:text-orbis-primary transition-colors touch-manipulation"
+                            aria-label="Editar"
+                        >
+                            <Pencil size={16} />
+                        </button>
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if(confirm('Excluir este item?')) onDelete(transaction.id);
+                            }}
+                            className="p-2 -mr-2 text-gray-300 dark:text-gray-600 hover:text-red-500 active:text-red-500 transition-colors touch-manipulation"
+                            aria-label="Excluir"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
