@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B0E1A" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#F4F5FF" media="(prefers-color-scheme: light)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ORBIS">
+    <meta name="description" content="Controle financeiro pessoal offline e seguro.">
+    
+    <link rel="apple-touch-icon" href="/pwa-192x192.png">
+    <title>ORBIS | Personal Finance</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              orbis: {
+                bg: '#0B0E1A',
+                bgLight: '#F4F5FF',
+                surface: '#0F1115',
+                surfaceLight: '#FFFFFF',
+                primary: '#C9C7FF',
+                accent: '#8A7BFF',
+                text: '#E2E4F0',
+                textMuted: '#9AA0C3',
+                danger: '#FF8A8A',
+                success: '#8AFFC1'
+              }
+            },
+            animation: {
+              'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+              'slide-up-sm': 'slideUpSm 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              'fade-in': 'fadeIn 0.3s ease-out',
+              'fade-in-delayed': 'fadeIn 0.35s ease-out 0.12s forwards',
+              'pulse-glow': 'pulseGlow 1.5s ease-out forwards',
+              'enter-card': 'slideUpFade 0.26s ease-out backwards',
+              'update-pulse': 'lightPulse 0.6s ease-out',
+            },
+            keyframes: {
+              slideUp: {
+                '0%': { transform: 'translateY(30px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              slideUpSm: {
+                '0%': { transform: 'translateY(8px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              slideUpFade: {
+                '0%': { transform: 'translateY(6px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              pulseGlow: {
+                '0%': { 
+                  boxShadow: '0 0 0 0 rgba(138, 123, 255, 0)',
+                  borderColor: 'rgba(138, 123, 255, 0)'
+                },
+                '10%': { 
+                  boxShadow: '0 0 20px rgba(138, 123, 255, 0.3)',
+                  borderColor: '#8A7BFF'
+                },
+                '100%': { 
+                  boxShadow: '0 0 0 0 rgba(138, 123, 255, 0)',
+                  borderColor: 'rgba(255, 255, 255, 0.05)'
+                },
+              },
+              lightPulse: {
+                '0%': { borderColor: 'inherit', boxShadow: 'none' },
+                '50%': { borderColor: '#8A7BFF', boxShadow: '0 0 15px rgba(138, 123, 255, 0.15)' },
+                '100%': { borderColor: 'inherit', boxShadow: 'none' }
+              }
+            },
+            screens: {
+              'xs': '375px',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --safe-area-top: env(safe-area-inset-top);
+        --safe-area-bottom: env(safe-area-inset-bottom);
+      }
+
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #0B0E1A;
+        transition: background-color 0.3s ease;
+        touch-action: manipulation;
+        overscroll-behavior-y: none;
+        user-select: none; /* App-like feel */
+      }
+      
+      /* Allow select on inputs */
+      input, textarea {
+        user-select: text;
+      }
+
+      .dark body { background-color: #0B0E1A; }
+      .light body { background-color: #F4F5FF; }
+      
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      * { -webkit-tap-highlight-color: transparent; }
+
+      .safe-area-bottom { padding-bottom: max(1rem, var(--safe-area-bottom)); }
+      .safe-area-top { padding-top: max(1rem, var(--safe-area-top)); }
+      
+      /* Glassmorphism utilities */
+      .glass {
+        background: rgba(15, 17, 21, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .light .glass {
+        background: rgba(255, 255, 255, 0.8);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "date-fns": "https://esm.sh/date-fns@^4.1.0",
+    "date-fns/": "https://esm.sh/date-fns@^4.1.0/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
+    "vite-plugin-pwa": "https://esm.sh/vite-plugin-pwa@^1.2.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
