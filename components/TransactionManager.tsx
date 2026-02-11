@@ -100,19 +100,7 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
             <div className="absolute inset-0" onClick={() => setEditingTransaction(null)} />
             
             <div className="relative w-full max-w-xl bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/10 rounded-t-3xl md:rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Pencil size={20} className="text-orbis-primary" />
-                        Editar Lançamento
-                    </h3>
-                    <button 
-                        onClick={() => setEditingTransaction(null)}
-                        className="p-2 bg-gray-100 dark:bg-white/5 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
-                    >
-                        <X size={20} className="text-gray-500" />
-                    </button>
-                </div>
-                
+                {/* Header is now handled inside TransactionForm for better control over the Save button placement */}
                 <TransactionForm 
                     type={type}
                     categories={categories}

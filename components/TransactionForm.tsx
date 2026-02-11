@@ -16,7 +16,7 @@ interface TransactionFormProps {
 export const TransactionForm: React.FC<TransactionFormProps> = ({ 
     type, categories, transactions, onSave, onCancel, autoFocus = true, initialData 
 }) => {
-    // Initial state setup based on initialData or defaults
+    // Initial state setup
     const [displayValue, setDisplayValue] = useState('');
     const [rawValue, setRawValue] = useState(0);
     const [desc, setDesc] = useState('');
@@ -33,7 +33,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             setDisplayValue(initialData.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
             setDesc(initialData.description);
             setCatId(initialData.categoryId);
-            // Ensure we grab just the YYYY-MM-DD part
+            // Ensure we grab just the YYYY-MM-DD part from ISO string
             setDate(initialData.dateISO.split('T')[0]);
             setRecurrence(initialData.recurrence || 'unique');
         }
@@ -41,7 +41,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
     // Auto-suggestion logic (Only run if NOT editing)
     useEffect(() => {
-        if (initialData) return; // Disable auto-suggest on edit
+        if (initialData) return; // Disable auto-suggest on edit to prevent overwriting user corrections
         
         if (!desc || desc.length < 3) {
             if (desc.length === 0) setAutoSuggested(false);
@@ -93,7 +93,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         
         setIsSubmitting(false);
         
-        // Only reset if NOT editing (Edit modal usually closes after save)
+        // Only reset if NOT editing (Edit modal usually closes after save, so no need to clear)
         if (!initialData) {
             setDisplayValue('');
             setRawValue(0);
@@ -108,7 +108,35 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     const isEditing = !!initialData;
 
     return (
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+            
+            {/* --- EDIT MODE HEADER --- */}
+            {isEditing && (
+                <div className="col-span-1 md:col-span-2 flex items-center justify-between mb-2 pb-4 border-b border-gray-100 dark:border-white/5 -mx-2 px-2">
+                    <button 
+                        type="button" 
+                        onClick={onCancel}
+                        className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1"
+                    >
+                        Cancelar
+                    </button>
+                    
+                    <span className="text-base font-bold text-gray-900 dark:text-white">Editar Lançamento</span>
+
+                    <button 
+                        type="submit"
+                        disabled={isSubmitting}
+                        className={`
+                            px-4 py-2 rounded-full text-sm font-bold text-orbis-bg transition-all active:scale-95 flex items-center gap-2
+                            ${isSubmitting ? 'bg-orbis-primary/70 cursor-wait' : 'bg-orbis-primary shadow-lg shadow-orbis-primary/20'}
+                        `}
+                    >
+                        {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                        Salvar
+                    </button>
+                </div>
+            )}
+
             {/* Amount Input */}
             <div className="col-span-1 md:col-span-2">
                 <label className="block text-xs font-medium text-gray-500 dark:text-orbis-textMuted uppercase mb-1">Valor</label>
@@ -221,38 +249,40 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                 </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-end col-span-1 md:col-span-2 gap-3 pt-2">
-                {onCancel && (
-                    <button 
-                        type="button"
-                        onClick={onCancel}
-                        className="flex-1 py-4 rounded-xl font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
-                    >
-                        Cancelar
-                    </button>
-                )}
-                <button 
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={`
-                        flex-1 py-4 rounded-xl font-bold text-lg text-orbis-bg transition-all active:scale-[0.98] flex items-center justify-center gap-2
-                        ${isSubmitting ? 'bg-orbis-primary cursor-wait' : 'bg-orbis-primary shadow-lg shadow-orbis-primary/20'}
-                    `}
-                >
-                    {isSubmitting ? (
-                        <>
-                            <Loader2 className="animate-spin" />
-                            {isEditing ? 'Atualizando...' : 'Salvando...'}
-                        </>
-                    ) : (
-                        <>
-                            {isEditing ? <Save size={20} /> : <Check size={20} />}
-                            {isEditing ? 'Atualizar' : 'Salvar'}
-                        </>
+            {/* Actions (BOTTOM - Only show if NOT editing) */}
+            {!isEditing && (
+                <div className="flex items-end col-span-1 md:col-span-2 gap-3 pt-2">
+                    {onCancel && (
+                        <button 
+                            type="button"
+                            onClick={onCancel}
+                            className="flex-1 py-4 rounded-xl font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                        >
+                            Cancelar
+                        </button>
                     )}
-                </button>
-            </div>
+                    <button 
+                        type="submit"
+                        disabled={isSubmitting}
+                        className={`
+                            flex-1 py-4 rounded-xl font-bold text-lg text-orbis-bg transition-all active:scale-[0.98] flex items-center justify-center gap-2
+                            ${isSubmitting ? 'bg-orbis-primary cursor-wait' : 'bg-orbis-primary shadow-lg shadow-orbis-primary/20'}
+                        `}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="animate-spin" />
+                                Salvando...
+                            </>
+                        ) : (
+                            <>
+                                <Check size={20} />
+                                Salvar
+                            </>
+                        )}
+                    </button>
+                </div>
+            )}
         </form>
     );
 };
