@@ -10,9 +10,11 @@
     <meta name="apple-mobile-web-app-title" content="ORBIS">
     <meta name="description" content="Controle financeiro pessoal offline e seguro.">
     
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="apple-touch-icon" href="/pwa-192x192.png">
     <title>ORBIS | Personal Finance</title>
     
+    <!-- Tailwind via CDN for quick start. For production, ideally use postcss/tailwind config in build -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -153,5 +155,6 @@
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
