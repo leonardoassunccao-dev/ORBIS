@@ -3,7 +3,7 @@ import { Transaction, Category, PatrimonyTransaction } from '../types';
 import { AnalyticsService } from '../services/analytics';
 import { InsightService } from '../services/insights';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, Wallet, Calendar, Landmark, Sparkles, ShieldCheck, Lock } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, Calendar, Landmark, Sparkles, ShieldCheck, Lock, TrendingUp, AlertCircle } from 'lucide-react';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -23,6 +23,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
   const stats = useMemo(() => 
     AnalyticsService.getSummary(filteredTransactions, patrimonyTransactions), 
   [filteredTransactions, patrimonyTransactions]);
+
+  // Forecast Logic (always based on full history for better accuracy, not filtered period)
+  const forecast = useMemo(() => 
+    AnalyticsService.getMonthForecast(transactions, stats.availableCash),
+  [transactions, stats.availableCash]);
 
   const chartData = useMemo(() => 
     AnalyticsService.getBalanceHistory(filteredTransactions), 
@@ -169,7 +174,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
         {/* Patrimony */}
         <SummaryCard 
           index={1}
-          title="Patrimônio do Leo" 
+          title="Patrimônio" 
           value={stats.patrimonyTotal} 
           description="Sua base de segurança financeira."
           icon={Landmark} 
@@ -192,6 +197,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
           value={stats.totalExpense} 
           description="Total de saídas no período."
           icon={ArrowDownRight} 
+        />
+      </div>
+
+      {/* Forecast Card (New Component) */}
+      <div className="animate-fade-in" style={{ animationDelay: '400ms', animationFillMode: 'backwards' }}>
+        <ForecastCard 
+            projectedBalance={forecast.projectedBalance}
+            isPositive={forecast.isPositive}
+            reliability={forecast.reliability}
+            formatCurrency={formatCurrency}
         />
       </div>
 
@@ -324,6 +339,55 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
 };
 
 // --- SUBCOMPONENTS ---
+
+interface ForecastCardProps {
+    projectedBalance: number;
+    isPositive: boolean;
+    reliability: 'low' | 'high';
+    formatCurrency: (val: number) => string;
+}
+
+const ForecastCard: React.FC<ForecastCardProps> = ({ projectedBalance, isPositive, reliability, formatCurrency }) => {
+    return (
+        <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
+            <div className="flex justify-between items-start mb-2">
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-orbis-textMuted uppercase tracking-wider flex items-center gap-2">
+                    <Calendar size={14} />
+                    Previsão do Mês
+                </h3>
+            </div>
+
+            <div className="mb-4">
+                <span className={`text-3xl md:text-4xl font-bold tracking-tight ${isPositive ? 'text-green-500 dark:text-[#8AFFC1]' : 'text-red-500 dark:text-[#FF8A8A]'}`}>
+                    Saldo estimado: {formatCurrency(projectedBalance)}
+                </span>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                    Com base no seu saldo atual e média de gastos.
+                </p>
+            </div>
+
+            <div className="h-px w-full bg-gray-100 dark:bg-white/5 my-4" />
+
+            <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${isPositive ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                    {isPositive ? <TrendingUp size={20} /> : <AlertCircle size={20} />}
+                </div>
+                <div className="flex-1">
+                    <p className={`text-sm font-medium ${isPositive ? 'text-gray-900 dark:text-white' : 'text-red-500 dark:text-red-400'}`}>
+                        {isPositive 
+                            ? (reliability === 'low' ? "Projeção inicial positiva." : "Você deve terminar o mês no azul.") 
+                            : "Atenção: projeção indica possível saldo negativo."}
+                    </p>
+                </div>
+            </div>
+
+            {/* Optional Footer Microcopy */}
+             <div className="absolute bottom-4 right-4 text-[10px] text-gray-300 dark:text-white/10 opacity-0 group-hover:opacity-100 transition-opacity select-none">
+                Previsão baseada em dados atuais
+            </div>
+        </div>
+    );
+};
 
 interface InsightsCardProps {
     text: string;

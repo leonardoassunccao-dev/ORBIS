@@ -67,7 +67,7 @@ export const PatrimonyManager: React.FC<PatrimonyManagerProps> = ({ transactions
                 <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500 dark:text-indigo-400">
                     <Landmark size={24} />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Patrimônio do Leo</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Patrimônio</h2>
             </div>
             <p className="text-sm text-gray-500 dark:text-orbis-textMuted">
                 Dinheiro protegido para o seu futuro.

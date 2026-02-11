@@ -53,7 +53,7 @@ export const PatrimonyActionModal: React.FC<PatrimonyActionModalProps> = ({ isOp
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <h3 className={`text-lg font-bold flex items-center gap-2 ${isDepositing ? 'text-gray-900 dark:text-white' : 'text-red-500'}`}>
-                            {isDepositing ? 'Adicionar ao Patrimônio do Leo' : 'Usar o Patrimônio do Leo'}
+                            {isDepositing ? 'Adicionar ao Patrimônio' : 'Usar o Patrimônio'}
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-orbis-textMuted mt-1">
                             {isDepositing 

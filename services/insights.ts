@@ -14,6 +14,20 @@ const KEYWORD_MAP: Record<string, string[]> = {
   'cat_1': ['salario', 'pagamento', 'remuneração', 'empresa'], // Salário (Income)
 };
 
+const DAILY_TIPS = [
+  "A meta não é gastar menos, é gastar bem.",
+  "Invista o que sobra depois de gastar? Não. Gaste o que sobra depois de investir.",
+  "Pequenos progressos diários resultam em grandes resultados.",
+  "Cuide dos centavos e os reais cuidarão de si mesmos.",
+  "O hábito de poupar é uma educação em si mesmo.",
+  "Preço é o que você paga. Valor é o que você leva.",
+  "A riqueza consiste não em ter grandes posses, mas em ter poucas necessidades.",
+  "Não trabalhe pelo dinheiro, faça o dinheiro trabalhar por você.",
+  "O juro composto é a oitava maravilha do mundo.",
+  "Nunca dependa de uma única fonte de renda.",
+  "Não guarde o que sobra, guarde primeiro e gaste o resto."
+];
+
 export const InsightService = {
   /**
    * Suggest a category based on description.
@@ -46,6 +60,25 @@ export const InsightService = {
     }
 
     return null;
+  },
+
+  getDailyTip: (): string => {
+    try {
+        const today = new Date().toDateString();
+        const savedDate = localStorage.getItem('orbis_insight_date');
+        const savedTip = localStorage.getItem('orbis_insight_text');
+
+        if (savedDate === today && savedTip) {
+            return savedTip;
+        }
+
+        const newTip = DAILY_TIPS[Math.floor(Math.random() * DAILY_TIPS.length)];
+        localStorage.setItem('orbis_insight_date', today);
+        localStorage.setItem('orbis_insight_text', newTip);
+        return newTip;
+    } catch (e) {
+        return DAILY_TIPS[0];
+    }
   },
 
   /**
@@ -160,18 +193,9 @@ export const InsightService = {
         };
     }
 
-    // E. Stability (Default with history)
-    // "Você manteve seus gastos estáveis neste período."
-    if (monthsCount > 0) {
-        return {
-            text: "Você manteve seus gastos estáveis neste período.",
-            status: 'neutral'
-        };
-    }
-
-    // F. New User / No History
+    // E. Fallback: Daily Tip (instead of generic stability message)
     return {
-        text: "À medida que você usa o Orbis, insights vão aparecer aqui.",
+        text: InsightService.getDailyTip(),
         status: 'neutral'
     };
   },

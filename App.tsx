@@ -5,11 +5,11 @@ import { TransactionManager } from './components/TransactionManager';
 import { PatrimonyManager } from './components/PatrimonyManager';
 import { PWAInstall } from './components/PWAInstall';
 import { Transaction, Category, PatrimonyTransaction } from './types';
-import { StorageService } from './services/storage';
-import { Sun, Moon, Upload, Download, Trash2 } from 'lucide-react';
+import { StorageService, ThemeType } from './services/storage';
+import { Upload, Download, Trash2, Palette, Check } from 'lucide-react';
 
 export default function App() {
-  const [theme, setTheme] = useState<'dark' | 'light'>(StorageService.getTheme());
+  const [theme, setTheme] = useState<ThemeType>(StorageService.getTheme());
   const [activeTab, setActiveTab] = useState<'dashboard' | 'income' | 'expense' | 'patrimony' | 'settings'>('dashboard');
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -21,8 +21,21 @@ export default function App() {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('dark', 'light');
-    root.classList.add(theme);
+    // Clear previous classes
+    root.classList.remove('dark', 'light', 'pink');
+    
+    // Apply logic:
+    // Light -> 'light'
+    // Dark -> 'dark'
+    // Pink -> 'dark' + 'pink' (Inherits dark structure but overrides colors via CSS vars)
+    if (theme === 'light') {
+        root.classList.add('light');
+    } else if (theme === 'pink') {
+        root.classList.add('dark', 'pink');
+    } else {
+        root.classList.add('dark');
+    }
+    
     StorageService.saveTheme(theme);
   }, [theme]);
 
@@ -141,16 +154,53 @@ export default function App() {
 
                 <div className="grid gap-4">
                     <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-sm">
-                        <h3 className="font-semibold text-lg mb-4 text-orbis-text dark:text-white">Aparência</h3>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Palette size={20} className="text-orbis-primary" />
+                            <h3 className="font-semibold text-lg text-orbis-text dark:text-white">Aparência</h3>
+                        </div>
+                        
+                        <div className="space-y-4">
                             <span className="text-sm text-orbis-textMuted">Tema do aplicativo</span>
-                            <button 
-                                onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/5 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-white/10 transition"
-                            >
-                                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                                {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
-                            </button>
+                            <div className="grid grid-cols-3 gap-3">
+                                <button 
+                                    onClick={() => setTheme('dark')}
+                                    className={`
+                                        relative h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
+                                        bg-[#0B0E1A] overflow-hidden
+                                        ${theme === 'dark' ? 'border-orbis-accent ring-2 ring-orbis-accent/20' : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100'}
+                                    `}
+                                >
+                                    <div className="absolute inset-x-0 top-0 h-6 bg-[#1e1b4b]/50 w-full" />
+                                    <span className="text-xs font-medium text-white relative z-10 mt-4">Dark</span>
+                                    {theme === 'dark' && <div className="absolute top-2 right-2 bg-orbis-accent rounded-full p-0.5"><Check size={10} className="text-white" /></div>}
+                                </button>
+
+                                <button 
+                                    onClick={() => setTheme('light')}
+                                    className={`
+                                        relative h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
+                                        bg-[#F4F5FF] overflow-hidden
+                                        ${theme === 'light' ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100'}
+                                    `}
+                                >
+                                    <div className="absolute inset-x-0 top-0 h-6 bg-indigo-100 w-full" />
+                                    <span className="text-xs font-medium text-gray-900 relative z-10 mt-4">Light</span>
+                                    {theme === 'light' && <div className="absolute top-2 right-2 bg-indigo-500 rounded-full p-0.5"><Check size={10} className="text-white" /></div>}
+                                </button>
+
+                                <button 
+                                    onClick={() => setTheme('pink')}
+                                    className={`
+                                        relative h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
+                                        bg-[#11050a] overflow-hidden
+                                        ${theme === 'pink' ? 'border-[#FF1493] ring-2 ring-[#FF1493]/20' : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100'}
+                                    `}
+                                >
+                                    <div className="absolute inset-x-0 top-0 h-6 bg-[#FF1493]/20 w-full" />
+                                    <span className="text-xs font-medium text-[#FF1493] relative z-10 mt-4">Midnight</span>
+                                    {theme === 'pink' && <div className="absolute top-2 right-2 bg-[#FF1493] rounded-full p-0.5"><Check size={10} className="text-white" /></div>}
+                                </button>
+                            </div>
                         </div>
                     </div>
 

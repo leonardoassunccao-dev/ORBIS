@@ -29,14 +29,15 @@
             },
             colors: {
               orbis: {
-                bg: '#0B0E1A',
-                bgLight: '#F4F5FF',
-                surface: '#0F1115',
-                surfaceLight: '#FFFFFF',
-                primary: '#C9C7FF',
-                accent: '#8A7BFF',
-                text: '#E2E4F0',
-                textMuted: '#9AA0C3',
+                // Using RGB variables allows Tailwind's opacity modifiers (e.g., /50) to work
+                bg: 'rgb(var(--orbis-bg) / <alpha-value>)',
+                bgLight: '#F4F5FF', // Legacy/Static
+                surface: 'rgb(var(--orbis-surface) / <alpha-value>)',
+                surfaceLight: '#FFFFFF', // Legacy/Static
+                primary: 'rgb(var(--orbis-primary) / <alpha-value>)',
+                accent: 'rgb(var(--orbis-accent) / <alpha-value>)',
+                text: 'rgb(var(--orbis-text) / <alpha-value>)',
+                textMuted: 'rgb(var(--orbis-text-muted) / <alpha-value>)',
                 danger: '#FF8A8A',
                 success: '#8AFFC1'
               }
@@ -69,21 +70,21 @@
               },
               pulseGlow: {
                 '0%': { 
-                  boxShadow: '0 0 0 0 rgba(138, 123, 255, 0)',
-                  borderColor: 'rgba(138, 123, 255, 0)'
+                  boxShadow: '0 0 0 0 rgba(var(--orbis-accent), 0)',
+                  borderColor: 'rgba(var(--orbis-accent), 0)'
                 },
                 '10%': { 
-                  boxShadow: '0 0 20px rgba(138, 123, 255, 0.3)',
-                  borderColor: '#8A7BFF'
+                  boxShadow: '0 0 20px rgba(var(--orbis-accent), 0.3)',
+                  borderColor: 'rgb(var(--orbis-accent))'
                 },
                 '100%': { 
-                  boxShadow: '0 0 0 0 rgba(138, 123, 255, 0)',
+                  boxShadow: '0 0 0 0 rgba(var(--orbis-accent), 0)',
                   borderColor: 'rgba(255, 255, 255, 0.05)'
                 },
               },
               lightPulse: {
                 '0%': { borderColor: 'inherit', boxShadow: 'none' },
-                '50%': { borderColor: '#8A7BFF', boxShadow: '0 0 15px rgba(138, 123, 255, 0.15)' },
+                '50%': { borderColor: 'rgb(var(--orbis-accent))', boxShadow: '0 0 15px rgba(var(--orbis-accent), 0.15)' },
                 '100%': { borderColor: 'inherit', boxShadow: 'none' }
               }
             },
@@ -98,25 +99,50 @@
       :root {
         --safe-area-top: env(safe-area-inset-top);
         --safe-area-bottom: env(safe-area-inset-bottom);
+        
+        /* Default Dark Theme (Blue/Purple) */
+        --orbis-bg: 11 14 26;        /* #0B0E1A */
+        --orbis-surface: 15 17 21;   /* #0F1115 */
+        --orbis-primary: 201 199 255;/* #C9C7FF */
+        --orbis-accent: 138 123 255; /* #8A7BFF */
+        --orbis-text: 226 228 240;   /* #E2E4F0 */
+        --orbis-text-muted: 154 160 195; /* #9AA0C3 */
+      }
+
+      /* Light Theme Overrides */
+      .light {
+        --orbis-bg: 244 245 255;      /* #F4F5FF */
+        --orbis-surface: 255 255 255; /* #FFFFFF */
+        --orbis-primary: 99 102 241;  /* Indigo 500 */
+        --orbis-accent: 79 70 229;    /* Indigo 600 */
+        --orbis-text: 31 41 55;       /* Gray 800 */
+        --orbis-text-muted: 107 114 128; /* Gray 500 */
+      }
+
+      /* Pink Theme Overrides (Midnight Pink - #FF1493) */
+      .pink {
+        --orbis-bg: 18 5 10;          /* Deep Blackish Pink */
+        --orbis-surface: 30 5 15;     /* Dark Surface */
+        --orbis-primary: 255 130 190; /* Softer version of accent for primary text/elements */
+        --orbis-accent: 255 20 147;   /* #FF1493 (DeepPink) */
+        --orbis-text: 255 235 245;    /* White with pink tint */
+        --orbis-text-muted: 215 150 180; /* Muted Rose */
       }
 
       body {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background-color: #0B0E1A;
-        transition: background-color 0.3s ease;
+        background-color: rgb(var(--orbis-bg));
+        color: rgb(var(--orbis-text));
+        transition: background-color 0.4s ease, color 0.4s ease;
         touch-action: manipulation;
         overscroll-behavior-y: none;
-        user-select: none; /* App-like feel */
+        user-select: none;
       }
       
-      /* Allow select on inputs */
       input, textarea {
         user-select: text;
       }
-
-      .dark body { background-color: #0B0E1A; }
-      .light body { background-color: #F4F5FF; }
       
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -126,14 +152,10 @@
       .safe-area-bottom { padding-bottom: max(1rem, var(--safe-area-bottom)); }
       .safe-area-top { padding-top: max(1rem, var(--safe-area-top)); }
       
-      /* Glassmorphism utilities */
       .glass {
-        background: rgba(15, 17, 21, 0.8);
+        background: rgba(var(--orbis-surface), 0.8);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-      }
-      .light .glass {
-        background: rgba(255, 255, 255, 0.8);
       }
     </style>
   <script type="importmap">

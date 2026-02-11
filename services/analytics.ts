@@ -1,5 +1,5 @@
 import { Transaction, SummaryStats, ChartDataPoint, Category, PatrimonyTransaction } from '../types';
-import { startOfDay, subDays, isAfter, format, parseISO, subMonths, isSameMonth } from 'date-fns';
+import { startOfDay, subDays, isAfter, format, parseISO, subMonths, isSameMonth, startOfMonth, endOfMonth, getDaysInMonth, getDate } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PatrimonyService } from './patrimony';
 
@@ -65,6 +65,70 @@ export const AnalyticsService = {
       totalIncome,
       totalExpense,
       savingsRate
+    };
+  },
+
+  /**
+   * Calculates a projection for the end of the current month.
+   * Logic: Current Balance + (Expected Remaining Income) - (Expected Remaining Expense)
+   * Expected values are derived from historical averages vs current month realization.
+   */
+  getMonthForecast: (transactions: Transaction[], currentAvailableCash: number) => {
+    const now = new Date();
+    const daysInMonth = getDaysInMonth(now);
+    const daysPassed = getDate(now);
+
+    // 1. Calculate Historical Averages (Income & Expense) - Last 3 months
+    let totalHistIncome = 0;
+    let totalHistExpense = 0;
+    let monthsCount = 0;
+
+    for (let i = 1; i <= 3; i++) {
+        const date = subMonths(now, i);
+        const monthTx = transactions.filter(t => isSameMonth(parseISO(t.dateISO), date));
+        
+        if (monthTx.length > 0) {
+            totalHistIncome += monthTx.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+            totalHistExpense += monthTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            monthsCount++;
+        }
+    }
+
+    const avgIncome = monthsCount > 0 ? totalHistIncome / monthsCount : 0;
+    const avgExpense = monthsCount > 0 ? totalHistExpense / monthsCount : 0;
+
+    // 2. Calculate Current Month Realized
+    const currentMonthTx = transactions.filter(t => isSameMonth(parseISO(t.dateISO), now));
+    const realizedIncome = currentMonthTx.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const realizedExpense = currentMonthTx.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+
+    // 3. Estimate Remaining (Projected)
+    // If realized > average, we assume 0 remaining (conservative), unless it's very early in the month.
+    // If it's early in the month (day < 5) and no data, we rely fully on average.
+    
+    const remainingIncome = Math.max(0, avgIncome - realizedIncome);
+    
+    // For expenses, we calculate a daily run rate if averages are missing, or use remaining budget based on average
+    let remainingExpense = 0;
+    if (avgExpense > 0) {
+        remainingExpense = Math.max(0, avgExpense - realizedExpense);
+    } else {
+        // Fallback: if no history, project based on current month daily average
+        const dailyRate = daysPassed > 0 ? realizedExpense / daysPassed : 0;
+        const daysLeft = daysInMonth - daysPassed;
+        remainingExpense = dailyRate * daysLeft;
+    }
+
+    const projectedBalance = currentAvailableCash + remainingIncome - remainingExpense;
+
+    return {
+        projectedBalance,
+        remainingIncome,
+        remainingExpense,
+        avgExpense,
+        isPositive: projectedBalance >= 0,
+        // Reliability score: Low if no history, High if we have 3 months data
+        reliability: monthsCount === 0 ? 'low' : 'high' 
     };
   },
 

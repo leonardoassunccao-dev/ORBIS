@@ -5,6 +5,8 @@ const STORAGE_KEY_PATRIMONY = 'orbis_patrimony_v1';
 const STORAGE_KEY_CATEGORIES = 'orbis_categories_v1';
 const STORAGE_KEY_THEME = 'orbis_theme_pref';
 
+export type ThemeType = 'dark' | 'light' | 'pink';
+
 const DEFAULT_CATEGORIES: Category[] = [
   { id: 'cat_1', name: 'Salário', type: 'income', color: '#8AFFC1' },
   { id: 'cat_2', name: 'Freelance', type: 'income', color: '#4ADE80' },
@@ -60,11 +62,11 @@ export const StorageService = {
     localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(categories));
   },
 
-  getTheme: (): 'dark' | 'light' => {
-    return (localStorage.getItem(STORAGE_KEY_THEME) as 'dark' | 'light') || 'dark';
+  getTheme: (): ThemeType => {
+    return (localStorage.getItem(STORAGE_KEY_THEME) as ThemeType) || 'dark';
   },
 
-  saveTheme: (theme: 'dark' | 'light') => {
+  saveTheme: (theme: ThemeType) => {
     localStorage.setItem(STORAGE_KEY_THEME, theme);
   },
 
