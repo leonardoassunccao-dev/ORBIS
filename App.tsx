@@ -1,20 +1,23 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { TransactionManager } from './components/TransactionManager';
 import { PatrimonyManager } from './components/PatrimonyManager';
+import { ImportManager } from './components/ImportManager';
 import { PWAInstall } from './components/PWAInstall';
-import { Transaction, Category, PatrimonyTransaction } from './types';
+import { Transaction, Category, PatrimonyTransaction, ImportBatch } from './types';
 import { StorageService, ThemeType } from './services/storage';
 import { Upload, Download, Trash2, Palette, Check } from 'lucide-react';
 
 export default function App() {
   const [theme, setTheme] = useState<ThemeType>(StorageService.getTheme());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'income' | 'expense' | 'patrimony' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'income' | 'expense' | 'import' | 'patrimony' | 'settings'>('dashboard');
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [patrimonyTransactions, setPatrimonyTransactions] = useState<PatrimonyTransaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [importBatches, setImportBatches] = useState<ImportBatch[]>([]);
   
   // Track last added ID for animation
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
@@ -43,6 +46,7 @@ export default function App() {
     setTransactions(StorageService.getTransactions());
     setPatrimonyTransactions(StorageService.getPatrimony());
     setCategories(StorageService.getCategories());
+    setImportBatches(StorageService.getImportBatches());
   }, []);
 
   const handleAddTransaction = useCallback((t: Omit<Transaction, 'id' | 'createdAt'>) => {
@@ -60,6 +64,37 @@ export default function App() {
     setLastAddedId(newTransaction.id);
     setTimeout(() => setLastAddedId(null), 2000); // Clear after animation
   }, [transactions]);
+
+  const handleImportTransactions = useCallback((newTransactions: Omit<Transaction, 'createdAt'>[], batch: ImportBatch) => {
+      // Add created timestamp to all
+      const now = Date.now();
+      const processed = newTransactions.map(t => ({...t, createdAt: now} as Transaction));
+      
+      const updatedTransactions = [...transactions, ...processed];
+      setTransactions(updatedTransactions);
+      StorageService.saveTransactions(updatedTransactions);
+
+      const updatedBatches = [...importBatches, batch];
+      setImportBatches(updatedBatches);
+      StorageService.saveImportBatches(updatedBatches);
+      
+      alert(`Sucesso! ${processed.length} transações importadas.`);
+      setActiveTab('income'); // Redirect to view them? Or stay? Let's stay on import or go to dashboard. The prompt says "show revision table", which is inside ImportManager. After confirm, maybe go to income/expense or just clear. Let's stay in import history.
+  }, [transactions, importBatches]);
+
+  const handleDeleteImportBatch = useCallback((batchId: string) => {
+      // Remove transactions with this batchId
+      const updatedTransactions = transactions.filter(t => t.importBatchId !== batchId);
+      setTransactions(updatedTransactions);
+      StorageService.saveTransactions(updatedTransactions);
+
+      // Remove batch record
+      const updatedBatches = importBatches.filter(b => b.id !== batchId);
+      setImportBatches(updatedBatches);
+      StorageService.saveImportBatches(updatedBatches);
+      
+      alert('Importação desfeita com sucesso.');
+  }, [transactions, importBatches]);
 
   const handleAddPatrimony = useCallback((t: Omit<PatrimonyTransaction, 'id' | 'createdAt'>) => {
       const newTransaction: PatrimonyTransaction = {
@@ -89,6 +124,7 @@ export default function App() {
       StorageService.resetData();
       setTransactions([]);
       setPatrimonyTransactions([]);
+      setImportBatches([]);
       setCategories(StorageService.getCategories()); // Reset to default
     }
   };
@@ -101,6 +137,7 @@ export default function App() {
         setTransactions(StorageService.getTransactions());
         setPatrimonyTransactions(StorageService.getPatrimony());
         setCategories(StorageService.getCategories());
+        setImportBatches(StorageService.getImportBatches());
         alert("Dados importados com sucesso!");
       } catch (err) {
         alert("Erro ao importar arquivo. Verifique o formato.");
@@ -135,6 +172,16 @@ export default function App() {
             onEdit={handleEditTransaction}
             highlightId={lastAddedId}
           />
+        );
+      case 'import':
+        return (
+            <ImportManager 
+                categories={categories}
+                transactions={transactions}
+                batches={importBatches}
+                onConfirmImport={handleImportTransactions}
+                onDeleteBatch={handleDeleteImportBatch}
+            />
         );
       case 'patrimony':
         return (

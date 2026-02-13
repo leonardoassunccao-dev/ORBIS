@@ -1,9 +1,11 @@
-import { Transaction, Category, PatrimonyTransaction } from '../types';
+
+import { Transaction, Category, PatrimonyTransaction, ImportBatch } from '../types';
 
 const STORAGE_KEY_TRANSACTIONS = 'orbis_transactions_v1';
 const STORAGE_KEY_PATRIMONY = 'orbis_patrimony_v1';
 const STORAGE_KEY_CATEGORIES = 'orbis_categories_v1';
 const STORAGE_KEY_THEME = 'orbis_theme_pref';
+const STORAGE_KEY_BATCHES = 'orbis_import_batches_v1';
 
 export type ThemeType = 'dark' | 'light' | 'pink';
 
@@ -62,6 +64,19 @@ export const StorageService = {
     localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(categories));
   },
 
+  getImportBatches: (): ImportBatch[] => {
+    try {
+        const data = localStorage.getItem(STORAGE_KEY_BATCHES);
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        return [];
+    }
+  },
+
+  saveImportBatches: (batches: ImportBatch[]) => {
+      localStorage.setItem(STORAGE_KEY_BATCHES, JSON.stringify(batches));
+  },
+
   getTheme: (): ThemeType => {
     return (localStorage.getItem(STORAGE_KEY_THEME) as ThemeType) || 'dark';
   },
@@ -75,6 +90,7 @@ export const StorageService = {
       transactions: StorageService.getTransactions(),
       patrimony: StorageService.getPatrimony(),
       categories: StorageService.getCategories(),
+      batches: StorageService.getImportBatches(),
       exportedAt: new Date().toISOString(),
       app: 'ORBIS'
     };
@@ -99,6 +115,9 @@ export const StorageService = {
             if (Array.isArray(data.patrimony)) {
                 StorageService.savePatrimony(data.patrimony);
             }
+            if (Array.isArray(data.batches)) {
+                StorageService.saveImportBatches(data.batches);
+            }
             StorageService.saveCategories(data.categories || DEFAULT_CATEGORIES);
             resolve(true);
           } else {
@@ -116,6 +135,7 @@ export const StorageService = {
     localStorage.removeItem(STORAGE_KEY_TRANSACTIONS);
     localStorage.removeItem(STORAGE_KEY_PATRIMONY);
     localStorage.removeItem(STORAGE_KEY_CATEGORIES);
+    localStorage.removeItem(STORAGE_KEY_BATCHES);
     // Keep theme preference
   }
 };

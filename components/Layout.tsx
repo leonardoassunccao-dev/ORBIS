@@ -1,10 +1,11 @@
+
 import React from 'react';
-import { LayoutDashboard, TrendingUp, TrendingDown, Settings, Wallet, Landmark } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, TrendingDown, Settings, Wallet, Landmark, FileInput } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: 'dashboard' | 'income' | 'expense' | 'patrimony' | 'settings';
-  onTabChange: (tab: 'dashboard' | 'income' | 'expense' | 'patrimony' | 'settings') => void;
+  activeTab: 'dashboard' | 'income' | 'expense' | 'import' | 'patrimony' | 'settings';
+  onTabChange: (tab: 'dashboard' | 'income' | 'expense' | 'import' | 'patrimony' | 'settings') => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => {
@@ -12,6 +13,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'income', label: 'Ganhos', icon: TrendingUp },
     { id: 'expense', label: 'Gastos', icon: TrendingDown },
+    { id: 'import', label: 'Importar', icon: FileInput },
     { id: 'patrimony', label: 'Patrimônio', icon: Landmark },
     { id: 'settings', label: 'Ajustes', icon: Settings },
   ] as const;
@@ -77,11 +79,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
             {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
+                // For mobile, skip 'settings' or condense if too many? 
+                // Currently 6 items fits tight on small screens, let's keep it but monitor overflow
+                // We might want to use scrollable container or hide label for small screens if needed.
+                // For now, flex-between usually handles 6 items okay on modern phones (360px+)
                 return (
                 <button
                     key={item.id}
                     onClick={() => onTabChange(item.id)}
-                    className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all active:scale-95 ${
+                    className={`flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all active:scale-95 min-w-[50px] ${
                     isActive ? 'text-orbis-accent dark:text-orbis-primary' : 'text-gray-400 dark:text-orbis-textMuted'
                     }`}
                 >

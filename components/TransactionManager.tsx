@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Transaction, Category, TransactionType } from '../types';
-import { Plus, Search, Trash2, X, Receipt, FileSearch, Pencil } from 'lucide-react';
+import { Plus, Search, Trash2, X, Receipt, FileSearch, Pencil, CloudDownload } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TransactionForm } from './TransactionForm';
@@ -172,6 +173,9 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categori
     const category = categories.find(c => c.id === transaction.categoryId);
     const date = parseISO(transaction.dateISO);
     
+    // Check if edited from original import
+    const isEdited = transaction.isImported && transaction.originalDescription && transaction.description !== transaction.originalDescription;
+
     // Get category initials or icon placeholder
     const catInitial = category?.name.substring(0, 1).toUpperCase() || '?';
     
@@ -196,9 +200,18 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categori
                         {catInitial}
                     </div>
                     <div className="truncate">
-                        <h3 className="font-semibold text-gray-900 dark:text-white text-base truncate pr-2">
-                            {transaction.description}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                             <h3 className="font-semibold text-gray-900 dark:text-white text-base truncate">
+                                {transaction.description}
+                            </h3>
+                            {transaction.isImported && (
+                                <span className="shrink-0 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium">
+                                    <CloudDownload size={10} />
+                                    {isEdited ? 'Editado' : 'Importado'}
+                                </span>
+                            )}
+                        </div>
+                       
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-orbis-textMuted mt-0.5">
                             <span className="font-medium" style={{ color: category?.color }}>{category?.name}</span>
                             <span>•</span>

@@ -1,3 +1,4 @@
+
 export type TransactionType = 'income' | 'expense';
 
 export type RecurrenceType = 'unique' | 'monthly' | 'yearly';
@@ -16,8 +17,20 @@ export interface Transaction {
   categoryId: string;
   description: string;
   type: TransactionType;
-  recurrence?: RecurrenceType; // New field
+  recurrence?: RecurrenceType;
   createdAt: number;
+  // Import metadata
+  importBatchId?: string;
+  isImported?: boolean;
+  originalDescription?: string;
+}
+
+export interface ImportBatch {
+  id: string;
+  fileName: string;
+  date: string;
+  count: number;
+  totalAmount: number;
 }
 
 export interface PatrimonyTransaction {
