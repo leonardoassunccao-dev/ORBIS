@@ -58,10 +58,10 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({ onAction
                                     transform: 'translateY(10px)'
                                 }}
                             >
-                                <span className="bg-white dark:bg-orbis-surface text-gray-700 dark:text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg border border-gray-100 dark:border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden xs:block">
+                                <span className="bg-orbis-surface text-gray-700 dark:text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg border border-gray-100 dark:border-orbis-border opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden xs:block">
                                     {item.label}
                                 </span>
-                                <div className="w-12 h-12 rounded-full bg-white dark:bg-orbis-surface border border-gray-100 dark:border-white/10 shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                <div className="w-12 h-12 rounded-full bg-orbis-surface border border-gray-100 dark:border-orbis-border shadow-lg flex items-center justify-center text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                                     <item.icon size={20} className={item.color} />
                                 </div>
                             </button>
@@ -78,7 +78,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({ onAction
                         w-14 h-14 rounded-full bg-[#C9C7FF] text-[#0F1115] shadow-lg shadow-[#C9C7FF]/30 
                         flex items-center justify-center transition-all duration-200
                         ${isTouched ? 'scale-90' : 'scale-100 hover:scale-105'}
-                        ${isOpen ? 'rotate-45 bg-white dark:bg-orbis-surface text-gray-900 dark:text-white' : ''}
+                        ${isOpen ? 'rotate-45 bg-orbis-surface text-gray-900 dark:text-white' : ''}
                     `}
                     aria-label="Ações rápidas"
                 >

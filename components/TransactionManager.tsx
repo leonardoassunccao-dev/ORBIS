@@ -5,29 +5,31 @@ import { Plus, Search, Trash2, X, Receipt, FileSearch, Pencil, CloudDownload } f
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TransactionForm } from './TransactionForm';
+import { TransactionDetailsModal } from './TransactionDetailsModal';
 
 interface TransactionManagerProps {
   type: TransactionType;
   transactions: Transaction[];
   categories: Category[];
-  onAdd: (t: Omit<Transaction, 'id' | 'createdAt'>) => void;
+  onAdd: (t: Omit<Transaction, 'id' | 'createdAt'>) => string; // Return the new ID
   onDelete: (id: string) => void;
   onEdit: (t: Transaction) => void;
-  highlightId: string | null;
   onFormToggle?: (isOpen: boolean) => void;
 }
 
 export const TransactionManager: React.FC<TransactionManagerProps> = ({ 
-  type, transactions, categories, onAdd, onDelete, onEdit, highlightId, onFormToggle
+  type, transactions, categories, onAdd, onDelete, onEdit, onFormToggle
 }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
 
   // Notify parent when form state changes (including edit modal)
   useEffect(() => {
-    onFormToggle?.(isFormOpen || !!editingTransaction);
-  }, [isFormOpen, editingTransaction, onFormToggle]);
+    onFormToggle?.(isFormOpen || !!editingTransaction || !!viewingTransaction);
+  }, [isFormOpen, editingTransaction, viewingTransaction, onFormToggle]);
   
   // Filter relevant transactions
   const listData = useMemo(() => {
@@ -81,13 +83,14 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
 
       {/* Add Form (Inline) */}
       {isFormOpen && (
-        <div className="animate-slide-up origin-top bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-xl mb-6 relative overflow-hidden">
+        <div className="animate-slide-up origin-top bg-orbis-surface border border-gray-200 dark:border-orbis-border p-6 rounded-2xl shadow-xl mb-6 relative overflow-hidden">
             <TransactionForm 
                 type={type} 
                 categories={categories} 
                 transactions={transactions}
                 onSave={(data) => {
-                    onAdd(data);
+                    const newId = onAdd(data);
+                    setLastAddedId(newId);
                     setIsFormOpen(false);
                 }}
             />
@@ -100,7 +103,7 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
             {/* Click backdrop to close */}
             <div className="absolute inset-0" onClick={() => setEditingTransaction(null)} />
             
-            <div className="relative w-full max-w-xl bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/10 rounded-t-3xl md:rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="relative w-full max-w-xl bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-t-3xl md:rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
                 {/* Header is now handled inside TransactionForm for better control over the Save button placement */}
                 <TransactionForm 
                     type={type}
@@ -114,6 +117,26 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
          </div>
       )}
 
+      {/* Details Modal */}
+      <TransactionDetailsModal
+        transaction={viewingTransaction}
+        categories={categories}
+        isOpen={!!viewingTransaction}
+        onClose={() => setViewingTransaction(null)}
+        onEdit={() => {
+            if (viewingTransaction) {
+                setEditingTransaction(viewingTransaction);
+                setViewingTransaction(null);
+            }
+        }}
+        onDelete={() => {
+            if (viewingTransaction && confirm('Excluir este item?')) {
+                onDelete(viewingTransaction.id);
+                setViewingTransaction(null);
+            }
+        }}
+      />
+
       {/* Search Bar */}
       {transactions.some(t => t.type === type) && (
           <div className="relative">
@@ -123,7 +146,7 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
                 placeholder="Buscar por descrição..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary/50 transition-colors shadow-sm"
+                className="w-full bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary/50 transition-colors shadow-sm"
             />
           </div>
       )}
@@ -152,7 +175,8 @@ export const TransactionManager: React.FC<TransactionManagerProps> = ({
                     categories={categories}
                     onDelete={onDelete}
                     onEdit={() => handleEditClick(t)}
-                    isHighlighted={highlightId === t.id}
+                    onView={() => setViewingTransaction(t)}
+                    isHighlighted={lastAddedId === t.id}
                 />
             ))
         )}
@@ -166,10 +190,11 @@ interface TransactionItemProps {
     categories: Category[];
     onDelete: (id: string) => void;
     onEdit: () => void;
+    onView: () => void;
     isHighlighted: boolean;
 }
 
-const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categories, onDelete, onEdit, isHighlighted }) => {
+const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categories, onDelete, onEdit, onView, isHighlighted }) => {
     const category = categories.find(c => c.id === transaction.categoryId);
     const date = parseISO(transaction.dateISO);
     
@@ -180,19 +205,22 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categori
     const catInitial = category?.name.substring(0, 1).toUpperCase() || '?';
     
     return (
-        <div className={`
-            relative overflow-hidden rounded-2xl p-4 transition-all duration-500 border group
-            bg-white dark:bg-orbis-surface
-            ${isHighlighted 
-                ? 'border-orbis-accent shadow-[0_0_20px_rgba(138,123,255,0.25)] animate-pulse-glow z-10' 
-                : 'border-gray-200 dark:border-white/5 shadow-sm'}
-        `}>
+        <div 
+            className={`
+                relative overflow-hidden rounded-2xl p-4 transition-all duration-500 border group cursor-pointer active:scale-[0.98]
+                bg-orbis-surface
+                ${isHighlighted 
+                    ? 'border-orbis-accent shadow-[0_0_20px_rgba(138,123,255,0.25)] animate-pulse-glow z-10' 
+                    : 'border-gray-200 dark:border-orbis-border shadow-sm hover:border-orbis-primary/30'}
+            `}
+            onClick={onView}
+        >
             {isHighlighted && (
                  <div className="absolute inset-0 bg-orbis-accent/10 animate-fade-in pointer-events-none" />
             )}
             <div className="flex items-center justify-between gap-4 relative z-10">
                 {/* Left: Icon & Info */}
-                <div className="flex items-center gap-4 flex-1 min-w-0" onClick={onEdit} role="button">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div 
                         className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0 shadow-inner"
                         style={{ backgroundColor: `${category?.color || '#9AA0C3'}20`, color: category?.color || '#9AA0C3' }}
@@ -225,35 +253,12 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, categori
                     </div>
                 </div>
 
-                {/* Right: Value & Actions */}
+                {/* Right: Value */}
                 <div className="flex flex-col items-end gap-1 shrink-0">
                     <span className={`font-bold text-base md:text-lg ${transaction.type === 'income' ? 'text-green-500' : 'text-gray-900 dark:text-white'}`}>
                         {transaction.type === 'expense' ? '- ' : '+ '}
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(transaction.amount).replace('R$', '').trim()}
                     </span>
-                    
-                    <div className="flex items-center gap-1 mt-1">
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onEdit();
-                            }}
-                            className="p-2 text-gray-300 dark:text-gray-600 hover:text-orbis-primary active:text-orbis-primary transition-colors touch-manipulation"
-                            aria-label="Editar"
-                        >
-                            <Pencil size={16} />
-                        </button>
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if(confirm('Excluir este item?')) onDelete(transaction.id);
-                            }}
-                            className="p-2 -mr-2 text-gray-300 dark:text-gray-600 hover:text-red-500 active:text-red-500 transition-colors touch-manipulation"
-                            aria-label="Excluir"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>

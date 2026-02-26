@@ -7,7 +7,7 @@ const STORAGE_KEY_CATEGORIES = 'orbis_categories_v1';
 const STORAGE_KEY_THEME = 'orbis_theme_pref';
 const STORAGE_KEY_BATCHES = 'orbis_import_batches_v1';
 
-export type ThemeType = 'dark' | 'light' | 'pink';
+export type ThemeType = 'dark' | 'light' | 'pink' | 'lobo';
 
 const DEFAULT_CATEGORIES: Category[] = [
   { id: 'cat_1', name: 'Salário', type: 'income', color: '#8AFFC1' },

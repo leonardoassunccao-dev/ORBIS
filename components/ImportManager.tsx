@@ -119,7 +119,7 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
 
     const renderUpload = () => (
         <div className="animate-fade-in space-y-8">
-            <div className="bg-white dark:bg-orbis-surface border-2 border-dashed border-gray-300 dark:border-white/10 rounded-3xl p-10 flex flex-col items-center justify-center text-center hover:border-orbis-primary/50 transition-colors group cursor-pointer"
+            <div className="bg-orbis-surface border-2 border-dashed border-gray-300 dark:border-orbis-border rounded-3xl p-10 flex flex-col items-center justify-center text-center hover:border-orbis-primary/50 transition-colors group cursor-pointer"
                  onClick={() => fileInputRef.current?.click()}>
                 
                 <input 
@@ -174,10 +174,10 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-6 shadow-sm overflow-x-auto">
+            <div className="bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl p-6 shadow-sm overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead>
-                        <tr className="border-b border-gray-100 dark:border-white/5">
+                        <tr className="border-b border-gray-100 dark:border-orbis-border">
                             {csvPreviewRows[0]?.map((_, i) => (
                                 <th key={i} className="px-4 py-3 text-gray-500 font-medium">Coluna {i + 1}</th>
                             ))}
@@ -185,7 +185,7 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
                     </thead>
                     <tbody>
                         {csvPreviewRows.slice(0, 3).map((row, idx) => (
-                            <tr key={idx} className="border-b border-gray-50 dark:border-white/5">
+                            <tr key={idx} className="border-b border-gray-50 dark:border-orbis-border">
                                 {row.map((cell, i) => (
                                     <td key={i} className="px-4 py-3 text-gray-700 dark:text-gray-300 whitespace-nowrap max-w-[200px] truncate">{cell}</td>
                                 ))}
@@ -258,7 +258,7 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
                 </button>
             </div>
 
-            <div className="flex-1 overflow-auto bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl shadow-sm custom-scrollbar">
+            <div className="flex-1 overflow-auto bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl shadow-sm custom-scrollbar">
                 <table className="w-full text-left border-collapse">
                     <thead className="sticky top-0 bg-gray-50 dark:bg-[#1A1D26] z-10 shadow-sm">
                         <tr>
@@ -335,14 +335,14 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
             </div>
 
             {batches.length === 0 ? (
-                <div className="text-center py-12 text-gray-400 bg-white dark:bg-orbis-surface rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
+                <div className="text-center py-12 text-gray-400 bg-orbis-surface rounded-2xl border border-dashed border-gray-200 dark:border-orbis-border">
                     <History size={32} className="mx-auto mb-2 opacity-50" />
                     <p>Nenhuma importação realizada ainda.</p>
                 </div>
             ) : (
                 <div className="space-y-3">
                     {batches.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(batch => (
-                        <div key={batch.id} className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+                        <div key={batch.id} className="bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl p-5 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl">
                                     <FileSpreadsheet size={20} />
@@ -376,7 +376,7 @@ export const ImportManager: React.FC<ImportManagerProps> = ({
             
             <button 
                 onClick={() => setStep('upload')}
-                className="w-full py-4 mt-4 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                className="w-full py-4 mt-4 border border-gray-200 dark:border-orbis-border text-gray-600 dark:text-gray-300 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
             >
                 Nova Importação
             </button>

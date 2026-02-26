@@ -60,7 +60,7 @@ export const PWAInstall = () => {
   if (isStandalone || !showInstallBanner) return null;
 
   return (
-    <div className="fixed bottom-[80px] md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-orbis-surface dark:bg-white/10 backdrop-blur-md border border-gray-200 dark:border-white/10 p-4 rounded-2xl shadow-2xl z-40 animate-slide-up">
+    <div className="fixed bottom-[80px] md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-orbis-surface backdrop-blur-md border border-gray-200 dark:border-orbis-border p-4 rounded-2xl shadow-2xl z-40 animate-slide-up">
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-gray-900 dark:text-white font-semibold flex items-center gap-2">
           <Smartphone size={18} className="text-orbis-accent" />

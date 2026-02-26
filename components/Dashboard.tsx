@@ -4,6 +4,7 @@ import { AnalyticsService } from '../services/analytics';
 import { InsightService } from '../services/insights';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { ArrowUpRight, ArrowDownRight, Wallet, Calendar, Landmark, Sparkles, ShieldCheck, Lock, TrendingUp, AlertCircle, Anchor, TrendingDown, Target, Lightbulb } from 'lucide-react';
+import { CountUp } from './CountUp';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -67,7 +68,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-fade-in">
         <div className="relative">
             <div className="absolute inset-0 bg-orbis-primary/20 blur-[40px] rounded-full" />
-            <div className="relative bg-white dark:bg-orbis-surface p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-xl">
+            <div className="relative bg-orbis-surface p-6 rounded-3xl border border-gray-200 dark:border-orbis-border shadow-xl">
                 <ShieldCheck size={48} className="text-orbis-accent" />
             </div>
         </div>
@@ -83,7 +84,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg px-4">
-            <div className="p-4 rounded-2xl bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 flex items-center gap-3 text-left">
+            <div className="p-4 rounded-2xl bg-orbis-surface border border-gray-200 dark:border-orbis-border flex items-center gap-3 text-left">
                 <div className="p-2 rounded-full bg-green-500/10 text-green-500">
                     <ArrowUpRight size={20} />
                 </div>
@@ -92,7 +93,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
                     <p className="text-xs text-gray-500">Salários, freelas, vendas.</p>
                 </div>
             </div>
-            <div className="p-4 rounded-2xl bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 flex items-center gap-3 text-left">
+            <div className="p-4 rounded-2xl bg-orbis-surface border border-gray-200 dark:border-orbis-border flex items-center gap-3 text-left">
                 <div className="p-2 rounded-full bg-red-500/10 text-red-500">
                     <ArrowDownRight size={20} />
                 </div>
@@ -126,7 +127,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
         
         <div className="animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
           <div className="flex overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 md:mx-0 md:px-0">
-            <div className="flex bg-white dark:bg-orbis-surface p-1 rounded-xl border border-gray-200 dark:border-white/5 whitespace-nowrap">
+            <div className="flex bg-orbis-surface p-1 rounded-xl border border-gray-200 dark:border-orbis-border whitespace-nowrap">
               {[7, 30, 90, 'all'].map((p) => (
                   <button
                   key={p}
@@ -225,7 +226,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in" style={{ animationDelay: '450ms', animationFillMode: 'backwards' }}>
         
         {/* Evolution Chart (Net Worth) */}
-        <div className="lg:col-span-2 bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-4 md:p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl p-4 md:p-6 shadow-sm">
           <div className="flex justify-between items-start mb-6">
              <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Evolução de Saldo</h3>
              <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-white/10 rounded-md text-gray-500">Fluxo de Caixa</span>
@@ -264,7 +265,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
                     strokeWidth={3}
                     fillOpacity={1} 
                     fill="url(#colorBalance)" 
-                    animationDuration={1500}
+                    animationDuration={600}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -272,7 +273,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
         </div>
 
         {/* Expenses by Category */}
-        <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-4 md:p-6 shadow-sm flex flex-col">
+        <div className="bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl p-4 md:p-6 shadow-sm flex flex-col">
           <h3 className="font-semibold text-lg mb-6 text-gray-900 dark:text-white">Gastos por Categoria</h3>
           <div className="flex-1 min-h-[200px] relative">
             {categoryData.length > 0 ? (
@@ -321,7 +322,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
       </div>
 
       {/* Monthly Comparison */}
-      <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in" style={{ animationDelay: '550ms', animationFillMode: 'backwards' }}>
+      <div className="bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl p-4 md:p-6 shadow-sm animate-fade-in" style={{ animationDelay: '550ms', animationFillMode: 'backwards' }}>
         <h3 className="font-semibold text-lg mb-6 text-gray-900 dark:text-white">Comparativo Mensal</h3>
         <div className="h-[200px] md:h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -338,8 +339,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
                         contentStyle={{ backgroundColor: '#0F1115', border: '1px solid #2D3142', borderRadius: '8px', color: '#fff' }}
                         formatter={(value: number) => formatCurrency(value)}
                     />
-                    <Bar dataKey="income" name="Ganhos" fill="#8AFFC1" radius={[4, 4, 0, 0]} maxBarSize={40} animationDuration={1000} />
-                    <Bar dataKey="expense" name="Gastos" fill="#FF8A8A" radius={[4, 4, 0, 0]} maxBarSize={40} animationDuration={1000} />
+                    <Bar dataKey="income" name="Ganhos" fill="#8AFFC1" radius={[4, 4, 0, 0]} maxBarSize={40} animationDuration={600} />
+                    <Bar dataKey="expense" name="Gastos" fill="#FF8A8A" radius={[4, 4, 0, 0]} maxBarSize={40} animationDuration={600} />
                 </BarChart>
             </ResponsiveContainer>
         </div>
@@ -381,7 +382,7 @@ const IncomeConsumptionCard: React.FC<IncomeConsumptionCardProps> = ({ percentag
     }
 
     return (
-        <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full animate-enter-card">
+        <div className="bg-orbis-surface border dark:border-orbis-border rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full animate-enter-card">
             <div>
                 <div className="flex justify-between items-start mb-4">
                     <h3 className="text-sm font-semibold text-gray-500 dark:text-orbis-textMuted uppercase tracking-wider flex items-center gap-2">
@@ -411,7 +412,7 @@ const IncomeConsumptionCard: React.FC<IncomeConsumptionCardProps> = ({ percentag
                     />
                 </div>
                 
-                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-orbis-textMuted border-t border-gray-100 dark:border-white/5 pt-3">
+                <div className="flex justify-between items-center text-xs text-gray-500 dark:text-orbis-textMuted border-t border-gray-100 dark:border-orbis-border pt-3">
                     <div className="flex flex-col">
                         <span>Total gasto</span>
                         <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(totalExpense)}</span>
@@ -448,7 +449,7 @@ const FinancialInsightCard: React.FC<FinancialInsightCardProps> = ({ title, subt
     }
 
     return (
-        <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full animate-enter-card" style={{ animationDelay: '100ms' }}>
+        <div className="bg-orbis-surface border dark:border-orbis-border rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full animate-enter-card" style={{ animationDelay: '100ms' }}>
             <div>
                 <h3 className="text-sm font-semibold text-gray-500 dark:text-orbis-textMuted uppercase tracking-wider flex items-center gap-2 mb-4">
                     <Lightbulb size={16} className={iconColor} />
@@ -462,7 +463,7 @@ const FinancialInsightCard: React.FC<FinancialInsightCardProps> = ({ title, subt
                 </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-orbis-border">
                 <div className="flex items-start gap-3">
                      <div className={`p-2 rounded-full shrink-0 ${iconBg} ${iconColor}`}>
                         <Sparkles size={18} />
@@ -549,36 +550,12 @@ const InsightsCard: React.FC<InsightsCardProps> = ({ text, status, dataVersion }
 
 // Component for smooth number interpolation
 const AnimatedNumber = ({ value }: { value: number }) => {
-    const [displayValue, setDisplayValue] = useState(value);
-    
-    useEffect(() => {
-        let start = displayValue;
-        const end = value;
-        if (start === end) return;
-
-        const duration = 600;
-        const startTime = performance.now();
-
-        const animate = (currentTime: number) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            // Ease out quart
-            const ease = 1 - Math.pow(1 - progress, 4);
-            
-            const current = start + (end - start) * ease;
-            setDisplayValue(current);
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-
-        requestAnimationFrame(animate);
-    }, [value]);
-
     return (
-        <>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(displayValue)}</>
+        <CountUp 
+            value={value} 
+            duration={0.8} 
+            formatter={(val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)} 
+        />
     );
 };
 
@@ -605,7 +582,7 @@ const SummaryCard = ({ title, value, description, icon: Icon, isMain = false, cu
                 animate-enter-card motion-reduce:animate-none
                 ${isMain 
                     ? 'bg-gradient-to-br from-orbis-primary to-[#A799FF] text-orbis-bg border-transparent shadow-lg shadow-orbis-primary/20' 
-                    : 'bg-white dark:bg-orbis-surface border-gray-200 dark:border-white/5'}
+                    : 'bg-orbis-surface border dark:border-orbis-border'}
                 ${isPulsing ? 'animate-update-pulse' : ''}
             `}
             style={{ 

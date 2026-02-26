@@ -6,6 +6,7 @@ import { TransactionManager } from './components/TransactionManager';
 import { PatrimonyManager } from './components/PatrimonyManager';
 import { ImportManager } from './components/ImportManager';
 import { PWAInstall } from './components/PWAInstall';
+import { ExportModal } from './components/ExportModal';
 import { Transaction, Category, PatrimonyTransaction, ImportBatch } from './types';
 import { StorageService, ThemeType } from './services/storage';
 import { Upload, Download, Trash2, Palette, Check } from 'lucide-react';
@@ -13,6 +14,7 @@ import { Upload, Download, Trash2, Palette, Check } from 'lucide-react';
 export default function App() {
   const [theme, setTheme] = useState<ThemeType>(StorageService.getTheme());
   const [activeTab, setActiveTab] = useState<'dashboard' | 'income' | 'expense' | 'import' | 'patrimony' | 'settings'>('dashboard');
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [patrimonyTransactions, setPatrimonyTransactions] = useState<PatrimonyTransaction[]>([]);
@@ -24,19 +26,17 @@ export default function App() {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    // Clear previous classes
     root.classList.remove('dark', 'light', 'pink');
     
-    // Apply logic:
-    // Light -> 'light'
-    // Dark -> 'dark'
-    // Pink -> 'dark' + 'pink' (Inherits dark structure but overrides colors via CSS vars)
     if (theme === 'light') {
         root.classList.add('light');
-    } else if (theme === 'pink') {
-        root.classList.add('dark', 'pink');
     } else {
         root.classList.add('dark');
+        if (theme === 'pink') {
+            root.classList.add('pink');
+        } else if (theme === 'lobo') {
+            root.classList.add('lobo');
+        }
     }
     
     StorageService.saveTheme(theme);
@@ -49,7 +49,7 @@ export default function App() {
     setImportBatches(StorageService.getImportBatches());
   }, []);
 
-  const handleAddTransaction = useCallback((t: Omit<Transaction, 'id' | 'createdAt'>) => {
+  const handleAddTransaction = useCallback((t: Omit<Transaction, 'id' | 'createdAt'>): string => {
     const newTransaction: Transaction = {
       ...t,
       id: crypto.randomUUID(),
@@ -63,6 +63,8 @@ export default function App() {
     // Trigger animation
     setLastAddedId(newTransaction.id);
     setTimeout(() => setLastAddedId(null), 2000); // Clear after animation
+
+    return newTransaction.id;
   }, [transactions]);
 
   const handleImportTransactions = useCallback((newTransactions: Omit<Transaction, 'createdAt'>[], batch: ImportBatch) => {
@@ -155,10 +157,9 @@ export default function App() {
             type="income" 
             transactions={transactions} 
             categories={categories}
-            onAdd={handleAddTransaction}
+            onAdd={handleAddTransaction as (t: Omit<Transaction, 'id' | 'createdAt'>) => string}
             onDelete={handleDeleteTransaction}
             onEdit={handleEditTransaction}
-            highlightId={lastAddedId}
           />
         );
       case 'expense':
@@ -167,10 +168,9 @@ export default function App() {
             type="expense" 
             transactions={transactions} 
             categories={categories}
-            onAdd={handleAddTransaction}
+            onAdd={handleAddTransaction as (t: Omit<Transaction, 'id' | 'createdAt'>) => string}
             onDelete={handleDeleteTransaction}
             onEdit={handleEditTransaction}
-            highlightId={lastAddedId}
           />
         );
       case 'import':
@@ -200,7 +200,7 @@ export default function App() {
                 </div>
 
                 <div className="grid gap-4">
-                    <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-sm">
+                    <div className="bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-sm">
                         <div className="flex items-center gap-2 mb-4">
                             <Palette size={20} className="text-orbis-primary" />
                             <h3 className="font-semibold text-lg text-orbis-text dark:text-white">Aparência</h3>
@@ -208,13 +208,13 @@ export default function App() {
                         
                         <div className="space-y-4">
                             <span className="text-sm text-orbis-textMuted">Tema do aplicativo</span>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-4 gap-3">
                                 <button 
                                     onClick={() => setTheme('dark')}
                                     className={`
                                         relative h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
                                         bg-[#0B0E1A] overflow-hidden
-                                        ${theme === 'dark' ? 'border-orbis-accent ring-2 ring-orbis-accent/20' : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100'}
+                                        ${theme === 'dark' ? 'border-orbis-accent ring-2 ring-orbis-accent/20' : 'border-gray-200 dark:border-orbis-border opacity-70 hover:opacity-100'}
                                     `}
                                 >
                                     <div className="absolute inset-x-0 top-0 h-6 bg-[#1e1b4b]/50 w-full" />
@@ -227,7 +227,7 @@ export default function App() {
                                     className={`
                                         relative h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
                                         bg-[#F4F5FF] overflow-hidden
-                                        ${theme === 'light' ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100'}
+                                        ${theme === 'light' ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200 dark:border-orbis-border opacity-70 hover:opacity-100'}
                                     `}
                                 >
                                     <div className="absolute inset-x-0 top-0 h-6 bg-indigo-100 w-full" />
@@ -240,23 +240,36 @@ export default function App() {
                                     className={`
                                         relative h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
                                         bg-[#0F0F14] overflow-hidden
-                                        ${theme === 'pink' ? 'border-[#FF2D95] ring-2 ring-[#FF2D95]/20' : 'border-gray-200 dark:border-white/10 opacity-70 hover:opacity-100'}
+                                        ${theme === 'pink' ? 'border-[#FF2D95] ring-2 ring-[#FF2D95]/20' : 'border-gray-200 dark:border-orbis-border opacity-70 hover:opacity-100'}
                                     `}
                                 >
                                     <div className="absolute inset-x-0 top-0 h-6 bg-[#FF2D95]/10 w-full" />
                                     <span className="text-xs font-medium text-[#FF2D95] relative z-10 mt-4">Midnight</span>
                                     {theme === 'pink' && <div className="absolute top-2 right-2 bg-[#FF2D95] rounded-full p-0.5"><Check size={10} className="text-white" /></div>}
                                 </button>
+
+                                <button 
+                                    onClick={() => setTheme('lobo')}
+                                    className={`
+                                        relative h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all
+                                        bg-[#000000] overflow-hidden
+                                        ${theme === 'lobo' ? 'border-[#800080] ring-2 ring-[#800080]/20' : 'border-gray-200 dark:border-orbis-border opacity-70 hover:opacity-100'}
+                                    `}
+                                >
+                                    <div className="absolute inset-x-0 top-0 h-6 bg-[#C0C0C0]/10 w-full" />
+                                    <span className="text-xs font-medium text-[#C0C0C0] relative z-10 mt-4">Lobo</span>
+                                    {theme === 'lobo' && <div className="absolute top-2 right-2 bg-[#800080] rounded-full p-0.5"><Check size={10} className="text-white" /></div>}
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-sm">
+                    <div className="bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-sm">
                         <h3 className="font-semibold text-lg mb-4 text-orbis-text dark:text-white">Dados</h3>
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-orbis-textMuted">Backup dos dados (JSON)</span>
-                                <button onClick={StorageService.exportData} className="flex items-center gap-2 px-4 py-2 bg-orbis-primary text-orbis-bg font-medium rounded-lg text-sm hover:opacity-90 transition">
+                                <button onClick={() => setIsExportModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-orbis-primary text-orbis-bg font-medium rounded-lg text-sm hover:opacity-90 transition">
                                     <Download className="w-4 h-4" />
                                     Exportar
                                 </button>
@@ -283,7 +296,7 @@ export default function App() {
                     
                     {/* About Orbis Card */}
                     <div 
-                        className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-sm opacity-0 animate-fade-in"
+                        className="bg-orbis-surface border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-sm opacity-0 animate-fade-in"
                         style={{ animationDuration: '250ms', animationDelay: '300ms', animationFillMode: 'forwards' }}
                     >
                         <h3 className="font-semibold text-lg mb-2 text-orbis-text dark:text-white">Sobre o Orbis</h3>
@@ -310,6 +323,7 @@ export default function App() {
     >
       {renderContent()}
       <PWAInstall />
+      <ExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} />
     </Layout>
   );
 }

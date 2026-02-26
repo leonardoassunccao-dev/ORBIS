@@ -75,7 +75,7 @@ export const PatrimonyManager: React.FC<PatrimonyManagerProps> = ({ transactions
         </div>
 
         {/* Main Card */}
-        <div className="bg-gradient-to-br from-[#1e1b4b] to-[#312e81] rounded-3xl p-6 text-white shadow-xl relative overflow-hidden border border-white/10">
+        <div className="bg-gradient-to-br from-[#1e1b4b] to-[#312e81] rounded-3xl p-6 text-white shadow-xl relative overflow-hidden border-orbis-border">
             {/* Glow Effect */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/30 blur-[80px] rounded-full pointer-events-none -mt-10 -mr-10" />
             
@@ -94,7 +94,7 @@ export const PatrimonyManager: React.FC<PatrimonyManagerProps> = ({ transactions
         </div>
 
         {/* Goal Section */}
-        <div className="bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+        <div className="bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl p-6 shadow-sm">
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -138,7 +138,7 @@ export const PatrimonyManager: React.FC<PatrimonyManagerProps> = ({ transactions
         <div className="grid grid-cols-2 gap-4">
             <button 
                 onClick={() => handleModalOpen('deposit')}
-                className="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl shadow-sm hover:border-indigo-500/50 transition-all active:scale-95 group"
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl shadow-sm hover:border-indigo-500/50 transition-all active:scale-95 group"
             >
                 <div className="w-10 h-10 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <ArrowUpCircle size={24} />
@@ -151,7 +151,7 @@ export const PatrimonyManager: React.FC<PatrimonyManagerProps> = ({ transactions
 
             <button 
                 onClick={() => handleModalOpen('withdraw')}
-                className="flex flex-col items-center justify-center gap-2 p-4 bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl shadow-sm hover:border-red-500/50 transition-all active:scale-95 group"
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl shadow-sm hover:border-red-500/50 transition-all active:scale-95 group"
             >
                 <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <ArrowDownCircle size={24} />
@@ -175,29 +175,35 @@ export const PatrimonyManager: React.FC<PatrimonyManagerProps> = ({ transactions
         <div className="space-y-3 pt-4">
             <h3 className="font-semibold text-gray-900 dark:text-white px-1">Histórico do patrimônio</h3>
             {sortedHistory.length === 0 ? (
-                <div className="p-8 text-center text-gray-400 bg-white/50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
+                <div className="p-8 text-center text-gray-400 bg-white/50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-orbis-border">
                     <p className="font-medium mb-1">Nenhum aporte ainda.</p>
                     <p className="text-xs">Comece hoje, mesmo que seja pouco.</p>
                 </div>
             ) : (
-                sortedHistory.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-4 bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/5 rounded-2xl shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                t.type === 'deposit' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                            }`}>
-                                {t.type === 'deposit' ? <ArrowUpCircle size={20} /> : <ArrowDownCircle size={20} />}
+                <div className="space-y-3">
+                    {sortedHistory.map((t, index) => (
+                        <div 
+                            key={t.id} 
+                            className="flex items-center justify-between p-4 bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl shadow-sm animate-enter-card"
+                            style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                    t.type === 'deposit' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                                }`}>
+                                    {t.type === 'deposit' ? <ArrowUpCircle size={20} /> : <ArrowDownCircle size={20} />}
+                                </div>
+                                <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">{t.description}</p>
+                                    <p className="text-xs text-gray-500">{format(parseISO(t.dateISO), "d 'de' MMMM yyyy", { locale: ptBR })}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="font-medium text-gray-900 dark:text-white">{t.description}</p>
-                                <p className="text-xs text-gray-500">{format(parseISO(t.dateISO), "d 'de' MMMM yyyy", { locale: ptBR })}</p>
-                            </div>
+                            <span className={`font-bold ${t.type === 'deposit' ? 'text-green-500' : 'text-red-500'}`}>
+                                {t.type === 'deposit' ? '+' : '-'} {formatCurrency(t.amount)}
+                            </span>
                         </div>
-                        <span className={`font-bold ${t.type === 'deposit' ? 'text-green-500' : 'text-red-500'}`}>
-                            {t.type === 'deposit' ? '+' : '-'} {formatCurrency(t.amount)}
-                        </span>
-                    </div>
-                ))
+                    ))}
+                </div>
             )}
         </div>
     </div>

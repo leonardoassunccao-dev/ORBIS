@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Transaction, Category, TransactionType, RecurrenceType } from '../types';
 import { Loader2, Check, Sparkles, Calendar as CalIcon, RefreshCw, Save } from 'lucide-react';
 import { InsightService } from '../services/insights';
+import { CustomKeypad } from './CustomKeypad';
 
 interface TransactionFormProps {
     type: TransactionType;
@@ -112,7 +113,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             
             {/* --- EDIT MODE HEADER --- */}
             {isEditing && (
-                <div className="col-span-1 md:col-span-2 flex items-center justify-between mb-2 pb-4 border-b border-gray-100 dark:border-white/5 -mx-2 px-2">
+                <div className="col-span-1 md:col-span-2 flex items-center justify-between mb-2 pb-4 border-b border-gray-100 dark:border-orbis-border -mx-2 px-2">
                     <button 
                         type="button" 
                         onClick={onCancel}
@@ -140,15 +141,15 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             {/* Amount Input */}
             <div className="col-span-1 md:col-span-2">
                 <label className="block text-xs font-medium text-gray-500 dark:text-orbis-textMuted uppercase mb-1">Valor</label>
-                <input 
-                    type="tel" 
-                    inputMode="numeric"
-                    autoFocus={autoFocus}
-                    required
-                    value={displayValue}
-                    onChange={handleAmountChange}
-                    placeholder="R$ 0,00"
-                    className="w-full text-5xl font-bold bg-transparent text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-white/20 border-none focus:ring-0 p-0 tracking-tight"
+                <div className="w-full text-5xl font-bold bg-transparent text-gray-900 dark:text-white tracking-tight flex items-center h-16">
+                    {displayValue || 'R$ 0,00'}
+                </div>
+                <CustomKeypad 
+                    value={rawValue} 
+                    onChange={(val) => {
+                        setRawValue(val);
+                        setDisplayValue(val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+                    }} 
                 />
             </div>
 
@@ -161,7 +162,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                     value={desc}
                     onChange={e => setDesc(e.target.value)}
                     placeholder={type === 'expense' ? "Ex: Netflix, Aluguel..." : "Ex: Salário, Projeto..."}
-                    className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary focus:ring-1 focus:ring-orbis-primary transition-all"
+                    className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-orbis-border rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary focus:ring-1 focus:ring-orbis-primary transition-all"
                 />
             </div>
 
@@ -180,7 +181,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                         required
                         value={catId}
                         onChange={handleCategoryChange}
-                        className={`w-full bg-gray-50 dark:bg-black/20 border rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary focus:ring-1 focus:ring-orbis-primary transition-all appearance-none ${autoSuggested ? 'border-orbis-accent/50 ring-1 ring-orbis-accent/20' : 'border-gray-200 dark:border-white/10'}`}
+                        className={`w-full bg-gray-50 dark:bg-black/20 border rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary focus:ring-1 focus:ring-orbis-primary transition-all appearance-none ${autoSuggested ? 'border-orbis-accent/50 ring-1 ring-orbis-accent/20' : 'border-gray-200 dark:border-orbis-border'}`}
                     >
                         <option value="" disabled>Selecione...</option>
                         {relevantCategories.map(c => (
@@ -203,7 +204,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                         required
                         value={date}
                         onChange={e => setDate(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary focus:ring-1 focus:ring-orbis-primary transition-all"
+                        className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-orbis-border rounded-xl pl-12 pr-4 py-3.5 text-base text-gray-900 dark:text-white focus:outline-none focus:border-orbis-primary focus:ring-1 focus:ring-orbis-primary transition-all"
                     />
                 </div>
             </div>
@@ -211,7 +212,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             {/* Recurrence (New Field) */}
             <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-orbis-textMuted uppercase mb-2">Recorrência</label>
-                <div className="flex bg-gray-50 dark:bg-black/20 p-1 rounded-xl border border-gray-200 dark:border-white/10">
+                <div className="flex bg-gray-50 dark:bg-black/20 p-1 rounded-xl border border-gray-200 dark:border-orbis-border">
                     <button
                         type="button"
                         onClick={() => setRecurrence('unique')}

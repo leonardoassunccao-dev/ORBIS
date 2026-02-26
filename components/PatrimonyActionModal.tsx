@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PatrimonyTransaction } from '../types';
 import { X, AlertTriangle } from 'lucide-react';
+import { CustomKeypad } from './CustomKeypad';
 
 interface PatrimonyActionModalProps {
     isOpen: boolean;
@@ -18,18 +19,6 @@ export const PatrimonyActionModal: React.FC<PatrimonyActionModalProps> = ({ isOp
     if (!isOpen) return null;
 
     const isDepositing = type === 'deposit';
-
-    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, "");
-        const numberValue = Number(value) / 100;
-        setAmountRaw(numberValue);
-        
-        const formatted = numberValue.toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        });
-        setAmountStr(formatted);
-    };
 
     const handleSubmit = async () => {
         if (amountRaw <= 0) return;
@@ -49,7 +38,7 @@ export const PatrimonyActionModal: React.FC<PatrimonyActionModalProps> = ({ isOp
 
     return (
         <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md bg-white dark:bg-orbis-surface border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-2xl relative animate-slide-up">
+            <div className="w-full max-w-md bg-orbis-surface border border-gray-200 dark:border-orbis-border rounded-2xl p-6 shadow-2xl relative animate-slide-up">
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <h3 className={`text-lg font-bold flex items-center gap-2 ${isDepositing ? 'text-gray-900 dark:text-white' : 'text-red-500'}`}>
@@ -81,14 +70,15 @@ export const PatrimonyActionModal: React.FC<PatrimonyActionModalProps> = ({ isOp
                 <div className="space-y-4">
                     <div>
                         <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Valor</label>
-                        <input 
-                            type="tel" 
-                            inputMode="numeric"
-                            autoFocus
-                            value={amountStr}
-                            onChange={handleAmountChange}
-                            placeholder="R$ 0,00"
-                            className="w-full text-4xl font-bold bg-transparent text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-white/20 border-none p-0 focus:ring-0"
+                        <div className="w-full text-4xl font-bold bg-transparent text-gray-900 dark:text-white tracking-tight flex items-center h-12">
+                            {amountStr || 'R$ 0,00'}
+                        </div>
+                        <CustomKeypad 
+                            value={amountRaw} 
+                            onChange={(val) => {
+                                setAmountRaw(val);
+                                setAmountStr(val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
+                            }} 
                         />
                     </div>
                     <div>
@@ -98,7 +88,7 @@ export const PatrimonyActionModal: React.FC<PatrimonyActionModalProps> = ({ isOp
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                             placeholder={isDepositing ? "Ex: Aporte mensal" : "Ex: Emergência médica"}
-                            className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white"
+                            className="w-full bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-orbis-border rounded-xl px-4 py-3 text-gray-900 dark:text-white"
                         />
                     </div>
                     
